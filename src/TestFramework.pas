@@ -2806,7 +2806,7 @@ end;
 
 procedure CreateRegistry;
 var
-  MyName :AnsiString;
+  MyName : string;
 begin
 {$IFDEF CLR}
   MyName := ExtractFileName(ParamStr(0));
