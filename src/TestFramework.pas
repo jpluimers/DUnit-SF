@@ -2335,7 +2335,7 @@ begin
           raise
         else if not E.ClassType.InheritsFrom(fExpectedException) then
           FailNotEquals(fExpectedException.ClassName, E.ClassName, 'unexpected exception', ExceptAddr);
-      end
+      end;
     end;
   finally
     FExpectedException := nil;
