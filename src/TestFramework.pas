@@ -2695,7 +2695,7 @@ begin
     end;
     if table <> nil then
     begin
-      AName  := Pointer(PChar(table) + 8);
+      AName  := Pointer(PAnsiChar(table) + 8);
       for i := 1 to table.count do
       begin
         // check if we've seen the method name
@@ -2709,7 +2709,7 @@ begin
           SetLength(FMethodNameList,length(FMethodNameList)+1);
           FMethodNameList[j] := AName^;
         end;
-        AName := Pointer(PChar(AName) + length(AName^) + 7)
+        AName := Pointer(PAnsiChar(AName) + length(AName^) + 7)
       end;
     end;
     aclass := aclass.ClassParent;
