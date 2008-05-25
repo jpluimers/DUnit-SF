@@ -41,7 +41,7 @@ unit TestFramework;
 interface
 uses
 {$IFDEF CLR}
-  System.Reflection, System.Diagnostics,
+  System.Reflection, System.Diagnostics, System.IO,
 {$ENDIF}
   SysUtils,
   Classes,
