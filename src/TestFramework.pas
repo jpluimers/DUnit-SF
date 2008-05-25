@@ -41,7 +41,7 @@ unit TestFramework;
 interface
 uses
 {$IFDEF CLR}
-  System.Reflection,
+  System.Reflection, System.Diagnostics,
 {$ENDIF}
   SysUtils,
   Classes,
@@ -2363,7 +2363,12 @@ begin
   FThrownExceptionClass := thrownException.ClassType;
   FThrownExceptionMessage := msg + thrownException.message;
   FThrownExceptionAddress := Addrs;
+
+  {$IFDEF CLR}
+  FStackTrace := thrownException.StackTrace;
+  {$ELSE}
   CaptureStackTrace;
+  {$ENDIF}
 end;
 
 constructor TTestFailure.Create(FailedTest: ITest; Addrs: Pointer; msg: string);
@@ -2419,7 +2424,7 @@ end;
 procedure TTestFailure.CaptureStackTrace;
 {$IFDEF USE_JEDI_JCL}
 var
-  Trace :TStrings;
+  Trace: TStrings;
 {$ENDIF}
 begin
 {$IFDEF USE_JEDI_JCL}
