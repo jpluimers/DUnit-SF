@@ -16,7 +16,7 @@
  * The Initial Developers of the Original Code are Kent Beck, Erich Gamma,
  * and Juancarlo Añez.
  * Portions created The Initial Developers are Copyright (C) 1999-2000.
- * Portions created by The DUnit Group are Copyright (C) 2000-2004.
+ * Portions created by The DUnit Group are Copyright (C) 2000-2008.
  * All rights reserved.
  *
  * Contributor(s):
@@ -600,9 +600,9 @@ type
     FThrownExceptionAddress: Pointer;
     FStackTrace:             string;
 
-    procedure CaptureStackTrace;
+    function CaptureStackTrace(ThrownException: Exception; ThrownExceptionAddress: Pointer): string;
   public
-    constructor Create(FailedTest: ITest; thrownException: Exception; Addrs: Pointer; msg: string = ''); overload;
+    constructor Create(FailedTest: ITest; ThrownException: Exception; Addrs: Pointer; msg: string = ''); overload;
     constructor Create(FailedTest: ITest; Addrs: Pointer; msg: string); overload;
     function FailedTest: ITest; virtual;
     function ThrownExceptionClass: TClass; virtual;
@@ -887,17 +887,20 @@ end;
 
 function PointerToAddressInfo(Addrs: Pointer): string;
 begin
- Result := '$'+PtrToStr(Addrs);
+  if Assigned(Addrs) then
+    Result := '$'+PtrToStr(Addrs)
+  else
+    Result := 'n/a';
 end;
 {$ELSE}
 function PointerToLocationInfo(Addrs: Pointer): string;
 begin
- Result := StackAddrToStr( Addrs );
+  Result := StackAddrToStr( Addrs );
 end;
 
 function PointerToAddressInfo(Addrs: Pointer): string;
 begin
- Result := StackAddrToStr( Addrs );
+  Result := StackAddrToStr( Addrs );
 end;
 {$ENDIF}
 {$ELSE}
@@ -2354,21 +2357,17 @@ end;
 
 { TTestFailure }
 
-constructor TTestFailure.Create(FailedTest: ITest; thrownException: Exception; Addrs: Pointer; msg: string);
+constructor TTestFailure.Create(FailedTest: ITest; ThrownException: Exception; Addrs: Pointer; msg: string);
 begin
-  assert(assigned(thrownException));
+  assert(assigned(ThrownException));
 
   inherited Create;
   FFailedTest := FailedTest;
-  FThrownExceptionClass := thrownException.ClassType;
-  FThrownExceptionMessage := msg + thrownException.message;
+  FThrownExceptionClass := ThrownException.ClassType;
+  FThrownExceptionMessage := msg + ThrownException.message;
   FThrownExceptionAddress := Addrs;
 
-  {$IFDEF CLR}
-  FStackTrace := thrownException.StackTrace;
-  {$ELSE}
-  CaptureStackTrace;
-  {$ENDIF}
+  FStackTrace := CaptureStackTrace(ThrownException, FThrownExceptionAddress);
 end;
 
 constructor TTestFailure.Create(FailedTest: ITest; Addrs: Pointer; msg: string);
@@ -2421,30 +2420,34 @@ begin
   Result := FStackTrace;
 end;
 
-procedure TTestFailure.CaptureStackTrace;
+function TTestFailure.CaptureStackTrace(ThrownException: Exception; ThrownExceptionAddress: Pointer): string;
 {$IFDEF USE_JEDI_JCL}
 var
   Trace: TStrings;
 {$ENDIF}
 begin
+{$IFDEF CLR}
+  Result := thrownException.StackTrace;
+{$ELSE}
 {$IFDEF USE_JEDI_JCL}
   Trace := TStringList.Create;
   try
     JclDebug.JclLastExceptStackListToStrings(Trace, true);
-    FStackTrace := Trace.Text;
+    Result := Trace.Text;
   finally
     Trace.Free;
   end;
 {$ELSE}
 {$IFDEF madExcept}
-  FStackTrace := madStackTrace.StackTrace( false, false, false, nil,
-                                           FThrownExceptionAddress, false,
+  Result := madStackTrace.StackTrace( false, false, false, nil,
+                                           ThrownExceptionAddress, false,
                                            false, 0, 0, nil,
-                                           @FThrownExceptionAddress );
+                                           @ThrownExceptionAddress );
 {$ELSE}
-  FStackTrace := '';
-{$ENDIF}
-{$ENDIF}
+  Result := '';
+{$ENDIF madExcept}
+{$ENDIF USE_JEDI_JCL}
+{$ENDIF CLR}
 end;
 
 { TTestSuite }
