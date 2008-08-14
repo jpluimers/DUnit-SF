@@ -916,7 +916,7 @@ function PointerToLocationInfo(Addrs: Pointer): string;
 var
   _file,
   _module,
-  _proc: AnsiString;
+  _proc: string;
   _line: integer;
 begin
   JclDebug.MapOfAddr(Addrs, _file, _module, _proc, _line);
@@ -931,7 +931,7 @@ function PointerToAddressInfo(Addrs: Pointer): string;
 var
   _file,
   _module,
-  _proc: AnsiString;
+  _proc: string;
   _line: integer;
 begin
   JclDebug.MapOfAddr(Addrs, _file, _module, _proc, _line);
