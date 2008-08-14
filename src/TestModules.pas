@@ -74,7 +74,7 @@ begin
        LibName := ChangeFileExt(LibName, '.dtl');
   end;
 
-  LibHandle := LoadLibrary(PChar(AnsiString(LibName)));
+  LibHandle := LoadLibrary(PChar(LibName));
   if LibHandle = 0 then
     raise EDUnitException.Create(Format('Could not load module %s: %s', [LibName, SysErrorMessage(GetLastError)]))
   else
