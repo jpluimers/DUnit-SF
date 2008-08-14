@@ -38,6 +38,10 @@
 {$BOOLEVAL OFF}
 unit TestFramework;
 
+
+{ The following is for C++ Support }
+(*$HPPEMIT '#pragma link "dunitrtl.lib"' *)
+
 interface
 uses
 {$IFDEF CLR}
@@ -465,6 +469,8 @@ type
     procedure CheckEquals(expected, actual: extended; msg: string = ''); overload; virtual;
     procedure CheckEquals(expected, actual: extended; delta: extended; msg: string = ''); overload; virtual;
     procedure CheckEquals(expected, actual: integer; msg: string = ''); overload; virtual;
+    procedure CheckEquals(expected, actual: Cardinal; msg: string = ''); overload; virtual;
+    procedure CheckEquals(expected, actual: int64; msg: string = ''); overload; virtual;
     procedure CheckEquals(expected, actual: string; msg: string = ''); overload; virtual;
     procedure CheckEqualsString(expected, actual: string; msg: string = ''); virtual;
 {$IFNDEF CLR}
@@ -477,6 +483,8 @@ type
     procedure CheckEqualsHex(expected, actual: longword; msg: string = ''; digits: integer=8); virtual;
 
     procedure CheckNotEquals(expected, actual: integer; msg: string = ''); overload; virtual;
+    procedure CheckNotEquals(expected, actual: Cardinal; msg: string = ''); overload; virtual;
+    procedure CheckNotEquals(expected, actual: int64; msg: string = ''); overload; virtual;
     procedure CheckNotEquals(expected: extended; actual: extended; delta: extended = 0; msg: string = ''); overload; virtual;
     procedure CheckNotEquals(expected, actual: string; msg: string = ''); overload; virtual;
     procedure CheckNotEqualsString(expected, actual: string; msg: string = ''); virtual;
@@ -1909,7 +1917,35 @@ begin
     FailNotEquals(IntToStr(expected), IntToStr(actual), msg, CallerAddr);
 end;
 
+procedure TAbstractTest.CheckEquals(expected, actual: Cardinal; msg: string = '');
+begin
+  FCheckCalled := True;
+  if expected <> actual then
+    FailEquals(IntToStr(expected), IntToStr(actual), msg, CallerAddr);
+end;
+
+procedure TAbstractTest.CheckEquals(expected, actual: int64; msg: string);
+begin
+  FCheckCalled := True;
+  if (expected <> actual) then
+    FailNotEquals(IntToStr(expected), IntToStr(actual), msg, CallerAddr);
+end;
+
 procedure TAbstractTest.CheckNotEquals(expected, actual: integer; msg: string = '');
+begin
+  FCheckCalled := True;
+  if expected = actual then
+    FailEquals(IntToStr(expected), IntToStr(actual), msg, CallerAddr);
+end;
+
+procedure TAbstractTest.CheckNotEquals(expected, actual: Cardinal; msg: string = '');
+begin
+  FCheckCalled := True;
+  if expected = actual then
+    FailEquals(IntToStr(expected), IntToStr(actual), msg, CallerAddr);
+end;
+
+procedure TAbstractTest.CheckNotEquals(expected, actual: int64; msg: string = '');
 begin
   FCheckCalled := True;
   if expected = actual then
