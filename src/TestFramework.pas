@@ -474,7 +474,9 @@ type
     procedure CheckEquals(expected, actual: string; msg: string = ''); overload; virtual;
     procedure CheckEqualsString(expected, actual: string; msg: string = ''); virtual;
 {$IFNDEF CLR}
+{$IFNDEF UNICODE}
     procedure CheckEquals(expected, actual: WideString; msg: string = ''); overload; virtual;
+{$ENDIF}
     procedure CheckEqualsWideString(expected, actual: WideString; msg: string = ''); virtual;
     procedure CheckEqualsMem(expected, actual: pointer; size:longword; msg:string=''); virtual;
 {$ENDIF}
@@ -489,7 +491,9 @@ type
     procedure CheckNotEquals(expected, actual: string; msg: string = ''); overload; virtual;
     procedure CheckNotEqualsString(expected, actual: string; msg: string = ''); virtual;
 {$IFNDEF CLR}
+{$IFNDEF UNICODE}
     procedure CheckNotEquals(const expected, actual: WideString; msg: string = ''); overload; virtual;
+{$ENDIF}
     procedure CheckNotEqualsWideString(const expected, actual: WideString; msg: string = ''); virtual;
     procedure CheckNotEqualsMem(expected, actual: pointer; size:longword; msg:string=''); virtual;
 {$ENDIF}
@@ -1837,12 +1841,14 @@ begin
 end;
 
 {$IFNDEF CLR}
+{$IFNDEF UNICODE}
 procedure TAbstractTest.CheckEquals(expected, actual: WideString; msg: string = '');
 begin
   FCheckCalled := True;
   if expected <> actual then
     FailNotEquals(expected, actual, msg, CallerAddr);
 end;
+{$ENDIF}
 
 procedure TAbstractTest.CheckEqualsWideString(expected, actual: WideString; msg: string = '');
 begin
@@ -1884,12 +1890,14 @@ begin
 end;
 
 {$IFNDEF CLR}
+{$IFNDEF UNICODE}
 procedure TAbstractTest.CheckNotEquals(const expected, actual: WideString; msg: string = '');
 begin
   FCheckCalled := True;
   if expected = actual then
     FailEquals(expected, actual, msg, CallerAddr);
 end;
+{$ENDIF}
 
 procedure TAbstractTest.CheckNotEqualsWideString(const expected, actual: WideString; msg: string = '');
 begin
