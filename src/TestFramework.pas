@@ -2745,13 +2745,13 @@ begin
         // check if we've seen the method name
         j := Low(FMethodNameList);
         while (j <= High(FMethodNameList))
-        and (AName^ <> FMethodNameList[j]) do
+        and (string(AName^) <> FMethodNameList[j]) do
           inc(j);
         // if we've seen the name, then the method has probably been overridden
         if j > High(FMethodNameList) then
         begin
           SetLength(FMethodNameList,length(FMethodNameList)+1);
-          FMethodNameList[j] := AName^;
+          FMethodNameList[j] := string(AName^);
         end;
         AName := Pointer(PAnsiChar(AName) + length(AName^) + 7)
       end;
