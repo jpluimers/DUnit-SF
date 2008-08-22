@@ -37,15 +37,13 @@
 program DUnit;
 
 uses
-{$IFDEF FASTMM}
-  {$IFNDEF VER180}
-    {$IFNDEF CLR}
+  {$IFNDEF CLR}
+    {$IFDEF FASTMM}
       FastMM4,
+    {$ELSE}
+      ShareMem,
     {$ENDIF}
   {$ENDIF}
-{$ELSE}
-    ShareMem,
-{$ENDIF}
   Windows,
   SysUtils,
   Forms,

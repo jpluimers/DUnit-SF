@@ -675,7 +675,6 @@ function MemLeakMonitor: IMemLeakMonitor;
 const sExpButWasFmt    = '%sexpected: <%s> but was: <%s>';
       sExpAndActualFmt = '%sexpected and actual were: <%s>';
 
-
 {$UNDEF DETECTMEMLEAKS}
 {$IFDEF VER180}
   {$IFNDEF CLR}
@@ -709,7 +708,7 @@ uses
 
 {$IFNDEF DETECTMEMLEAKS}
 // Stub code for use when Memory Leak detection is disabled.
-// See FastMM MemLeakMonitor.pas notes for invoking memory leak detection.
+// See FastMMMemLeakMonitor.pas notes for invoking memory leak detection.
 
 type
   TMemLeakMonitor = class(TInterfacedObject, IMemLeakMonitor)
