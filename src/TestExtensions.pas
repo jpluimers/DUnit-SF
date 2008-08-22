@@ -202,7 +202,9 @@ type
 implementation
 
 uses
-  {$IFDEF LINUX} Libc, {$ENDIF}
+  {$IFDEF LINUX}
+    Libc,
+  {$ENDIF}
   {$IFDEF FASTMM}
      FastMM4,
   {$ENDIF}
@@ -386,17 +388,18 @@ end;
 
 function TMemoryTest.MemoryAllocated: TMemorySize;
 begin
-  {$IFDEF VER180}
-     Result := GetHeapStatus.TotalAllocated;
+  {$IFDEF FASTMM}
+    Result := FastMM4.FastGetHeapStatus.TotalAllocated;
   {$ELSE}
-    {$IFDEF FASTMM}
-       Result := FastMM4.FastGetHeapStatus.TotalAllocated;
+    {$IFDEF CONDITIONALEXPRESSIONS }  // Delphi 6+ or Kylix
+      {$IF CompilerVersion >= 18.0}   // Delphi 2006+
+        Result := GetHeapStatus.TotalAllocated;
+      {$IFEND}
+      {$IF CompilerVersion < 18.0}    // Delphi 2005- (cannot use an $ELSE here)
+        Result := AllocMemSize;
+      {$IFEND}
     {$ELSE}
-       {$IFDEF CONDITIONALEXPRESSIONS} // Delphi 6+ or Kylix
-         Result := AllocMemSize;
-      {$ELSE}
-         Result := GetHeapStatus.TotalAllocated;
-      {$ENDIF}
+      Result := GetHeapStatus.TotalAllocated;
     {$ENDIF}
   {$ENDIF}
 end;
