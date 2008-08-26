@@ -40,14 +40,12 @@
 library DUnitTestLibW32;
 
 uses
-{$IFDEF FASTMM}
-  {$IFNDEF VER180}
-    {$IFNDEF CLR}
-      FastMM4,
-    {$ENDIF}
+{$IFNDEF CLR}
+  {$IFDEF FASTMM}
+    FastMM4,
+  {$ELSE}
+    ShareMem,
   {$ENDIF}
-{$ELSE}
-  ShareMem,
 {$ENDIF}
   SysUtils,
   TestFramework in '..\src\TestFramework.pas',

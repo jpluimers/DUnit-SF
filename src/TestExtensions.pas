@@ -392,12 +392,16 @@ begin
     Result := FastMM4.FastGetHeapStatus.TotalAllocated;
   {$ELSE}
     {$IFDEF CONDITIONALEXPRESSIONS }  // Delphi 6+ or Kylix
+      {$WARN SYMBOL_DEPRECATED OFF}   // Ignore the deprecated warning
+      {$WARN SYMBOL_PLATFORM OFF}     // Ignore the platform warning
       {$IF CompilerVersion >= 18.0}   // Delphi 2006+
         Result := GetHeapStatus.TotalAllocated;
       {$IFEND}
       {$IF CompilerVersion < 18.0}    // Delphi 2005- (cannot use an $ELSE here)
         Result := AllocMemSize;
       {$IFEND}
+      {$WARN SYMBOL_PLATFORM ON}
+      {$WARN SYMBOL_DEPRECATED ON}
     {$ELSE}
       Result := GetHeapStatus.TotalAllocated;
     {$ENDIF}

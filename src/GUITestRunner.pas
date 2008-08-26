@@ -444,13 +444,11 @@ implementation
 
 uses
 {$IFDEF FASTMM}
-  {$IFNDEF VER180}
-    {$IFNDEF CLR}
-      {$IFNDEF ManualLeakReportingControl}
-        {$I FastMM4Options.inc}
-      {$ENDIF}
-      FastMM4,
+  {$IFNDEF CLR}
+    {$IFNDEF ManualLeakReportingControl}
+      {$I FastMM4Options.inc}
     {$ENDIF}
+    FastMM4,
   {$ENDIF}
 {$ENDIF}
   Registry,
@@ -1246,23 +1244,18 @@ begin
   FUpdateTimer.OnTimer := OnUpdateTimer;
   Setup;
 
-  {$IFDEF VER180} //FastMM built in already
+  {$IFDEF FASTMM}
     FailTestCaseIfMemoryLeakedAction.Enabled := True;
-    ReportMemoryLeaksOnShutdown := ReportMemoryLeakTypeOnShutdownAction.Checked;
-  {$ELSE}
-    {$IFDEF FASTMM}
-      FailTestCaseIfMemoryLeakedAction.Enabled := True;
-      {$IFDEF ManualLeakReportingControl}
-        ReportMemoryLeaksOnShutdown := ReportMemoryLeakTypeOnShutdownAction.Checked;
-      {$ELSE}
-        ReportMemoryLeakTypeOnShutdownAction.Checked := False;
-        ReportMemoryLeakTypeOnShutdownAction.Enabled := False;
-      {$ENDIF}
+    {$IFDEF ManualLeakReportingControl}
+      ReportMemoryLeaksOnShutdown := ReportMemoryLeakTypeOnShutdownAction.Checked;
     {$ELSE}
-      FailTestCaseIfMemoryLeakedAction.Enabled := False;
       ReportMemoryLeakTypeOnShutdownAction.Checked := False;
       ReportMemoryLeakTypeOnShutdownAction.Enabled := False;
     {$ENDIF}
+  {$ELSE}
+    FailTestCaseIfMemoryLeakedAction.Enabled := False;
+    ReportMemoryLeakTypeOnShutdownAction.Checked := False;
+    ReportMemoryLeakTypeOnShutdownAction.Enabled := False;
   {$ENDIF}
 
   if not FailTestCaseIfMemoryLeakedAction.Enabled then
@@ -2306,17 +2299,12 @@ begin
   with ReportMemoryLeakTypeOnShutdownAction do
   begin
     Checked := not Checked;
-  {$IFDEF VER180}
+{$IFDEF FASTMM}
+  {$IFDEF ManualLeakReportingControl}
     ReportMemoryLeaksOnShutdown := Checked;
-  {$ELSE}
-    {$IFDEF FASTMM}
-     {$IFDEF ManualLeakReportingControl}
-       ReportMemoryLeaksOnShutdown := Checked;
-     {$ENDIF}
-    {$ENDIF}
   {$ENDIF}
+{$ENDIF}
   end;    // with
 end;
 
 end.
-

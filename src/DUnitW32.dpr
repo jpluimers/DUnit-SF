@@ -37,13 +37,13 @@
 program DUnitW32;
 
 uses
-  {$IFNDEF CLR}
-    {$IFDEF FASTMM}
-      FastMM4,
-    {$ELSE}
-      ShareMem,
-    {$ENDIF}
+{$IFNDEF CLR}
+  {$IFDEF FASTMM}
+    FastMM4,
+  {$ELSE}
+    ShareMem,
   {$ENDIF}
+{$ENDIF}
   Windows,
   SysUtils,
   Forms,

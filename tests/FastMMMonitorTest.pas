@@ -38,9 +38,7 @@ unit FastMMMonitorTest;
 interface
 uses
   {$IFDEF FASTMM}
-    {$IFNDEF VER180}
-      FastMM4,
-    {$ENDIF}
+    FastMM4,
   {$ENDIF}
   TestFramework,
   SysUtils,
@@ -222,11 +220,7 @@ end;
 
 function MemManagerLoaded: boolean;
 begin
-  {$IFDEF VER180}
-    Result := True;
-  {$ELSE}
-    Result := IsMemoryManagerSet;
-  {$ENDIF}
+  Result := IsMemoryManagerSet;
 end;
 
 procedure TBasicMemMonitor.CheckMemManagerLoaded;
@@ -377,7 +371,7 @@ begin
   MLM := TDUnitMemLeakMonitor.Create;
   SetLength(LeakyArray, 100);
   try
-    status := MLM.MemLeakDetected(leaks, True, MemUsed);
+    status := MLM.MemLeakDetected(Integer(Leaks), True, MemUsed);
     Check(status, 'Return result on empty array with leak was set False');
     Check((MemUsed = 112), 'Return value = ' + IntToStr(MemUsed) +
       ' Should be 112');
@@ -415,7 +409,7 @@ begin
   MLM := TDUnitMemLeakMonitor.Create;
   SetLength(LeakyArray, 100);
   try
-    status := MLM.MemLeakDetected(leaks, True, MemUsed);
+    status := MLM.MemLeakDetected(Integer(Leaks), True, MemUsed);
     Check(not status, 'Return result on single matching allowed not set true');
 
     SetLeakList([112,1]);
@@ -445,7 +439,7 @@ begin
   LeakyArray := nil;
 
   SetLeakList([0]);
-  status := MLM.MemLeakDetected(Leaks, True, MemUsed);
+  status := MLM.MemLeakDetected(Integer(Leaks), True, MemUsed);
   Check(status, 'Return result on less memory comparison set False');
   Check((MemUsed < 0), 'Return value on freed up memory comparison not less than zero');
 end;
@@ -462,7 +456,7 @@ begin
   LeakyArray := nil;
 
   SetLeakList([]);
-  status := MLM.MemLeakDetected(Leaks, False, MemUsed);
+  status := MLM.MemLeakDetected(Integer(Leaks), False, MemUsed);
   Check(not status, 'Return result on memory recovery set true');
 
   status := MLM.MemLeakDetected(Leaks, False, LIndex, MemUsed);
@@ -483,7 +477,7 @@ begin
   LeakyArray := nil;
 
   SetLeakList([-112]);
-  status := MLM.MemLeakDetected(Leaks, True, MemUsed);
+  status := MLM.MemLeakDetected(Integer(Leaks), True, MemUsed);
   Check(not status, 'Return result on single matching allowed not set true');
 
   SetLeakList([-112, 1]);

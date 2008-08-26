@@ -40,14 +40,12 @@
 library DUnitTestLib;
 
 uses
-{$IFDEF FASTMM}
-  {$IFNDEF VER180}
-    {$IFNDEF CLR}
-      FastMM4,
-    {$ENDIF}
-  {$ENDIF}
-{$ELSE}
+{$IFNDEF CLR}
+  {$IFDEF FASTMM}
+    FastMM4,
+  {$ELSE}
     ShareMem,
+  {$ENDIF}
 {$ENDIF}
   SysUtils,
   TestFramework,

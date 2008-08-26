@@ -38,10 +38,8 @@ program UnitTestsW32;
 
 uses
 {$IFDEF FASTMM}
-  {$IFNDEF VER180}
-    {$IFNDEF CLR}
-      FastMM4,
-    {$ENDIF}
+  {$IFNDEF CLR}
+    FastMM4,
   {$ENDIF}
 {$ENDIF}
   SysUtils,

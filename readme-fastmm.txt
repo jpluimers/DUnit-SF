@@ -2,7 +2,7 @@ Contents
 --------
 
 1. Setup Notes for enabling the use of FASTMM by DUnit
-2. Note for Delphi5 to Delphi2005 for Leak reporting on shutdown
+2. Note for Delphi 5 to Delphi 2005 for Leak reporting on shutdown
 3. Note for Delphi 6 users
 
 1. Setup Notes for enabling the use of FASTMM by DUnit
@@ -17,18 +17,16 @@ It is not necessary to replace Borland's memory manager at this or any stage for
 Your DUnit (.DPR) test projects require the addition of the following code block (it is already included in the standard DUnit projects).
 
 uses
-{$IFDEF FASTMM}    // From Project | Options | Directories/Conditionals
-  {$IFNDEF VER180}
+  {$IFDEF FASTMM}    // From Project | Options | Directories/Conditionals
     ($IFNDEF CLR}
       FastMM4,
     {$ENDIF}
   {$ENDIF}
-{$ENDIF}
 
-2. Note for Delphi5 to Delphi2005 for Leak reporting on shutdown
+2. Note for Delphi 5 to Delphi 2005 for Leak reporting on shutdown
 ----------------------------------------------------------------
 
-BDS2006 already includes FastMM support for leak reporting on shutdown and so does not require the conditional definitions mentioned below for earlier versions of Delphi.
+Delphi / BDS 2006 and later already include FastMM support for leak reporting on shutdown and so does not require the conditional definitions mentioned below for earlier versions of Delphi.
 
 To enable leak reporting on shutdown by FastMM when using Delphi versions 5 through to 2005 include "ManualLeakReportingControl" in Project - Options - Directories/Conditionals - Conditional defines.
 

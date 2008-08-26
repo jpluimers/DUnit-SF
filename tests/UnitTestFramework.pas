@@ -39,14 +39,8 @@
 
 
 {$UNDEF DETECTMEMLEAKS}
-{$IFDEF VER180}
-  {$IFNDEF CLR}
-    {$DEFINE DETECTMEMLEAKS}
-  {$ENDIF}
-{$ELSE}
-  {$IFDEF FASTMM}
-    {$DEFINE DETECTMEMLEAKS}
-  {$ENDIF}
+{$IFDEF FASTMM}
+  {$DEFINE DETECTMEMLEAKS} // Only check for memory leaks if FASTMM is specifically enabled
 {$ENDIF}
 
 unit UnitTestFramework;
@@ -610,8 +604,8 @@ var
   s1, s2, s3 :WideString;
 begin
   Check(true, 'Check');
-  CheckEquals(1, 1,                   'CheckEquals    Integer');
-  CheckNotEquals(1, 2,                'CheckNotEquals Integer');
+  CheckEquals(Integer(1), 1,                   'CheckEquals    Integer');
+  CheckNotEquals(Integer(1), 2,                'CheckNotEquals Integer');
   CheckEquals(1.0, 1.1, 0.15,         'CheckEquals    Double');
   CheckNotEquals(1.0, 1.16, 0.15,     'CheckNotEquals Double');
   CheckEqualsString('abc', 'abc',     'CheckEquals    String');
@@ -765,8 +759,8 @@ begin
   a:=1;
   b:=0;
   CheckEquals(0,FirstByteDiff(@a,@b,1,val1,val2),'FirstDiff(a,b,1)');
-  CheckEquals(a,Val1,'a<>Val1');
-  CheckEquals(b,Val2,'b<>Val2');
+  CheckEquals(Integer(a),Val1,'a<>Val1');
+  CheckEquals(Integer(b),Val2,'b<>Val2');
 
   // Try size=0: should yield -1
   CheckEquals(-1,FirstByteDiff(@a,@b,0,val1,val2),'FirstDiff(size=0)');
@@ -778,8 +772,8 @@ begin
   x:=$123456789ABCDEF0;
   z:=$023456789ABCDEF0; // differs in MSByte = last byte, offset 7
   CheckEquals(7,FirstByteDiff(@x,@z,8,val1,val2),'FirstDiff(x,z,8)');
-  CheckEquals($12,val1,'x-val1');
-  CheckEquals($02,val2,'z-val2');
+  CheckEquals(Int64($12),val1,'x-val1');
+  CheckEquals(Int64($02),val2,'z-val2');
 
   // 3. Test 1024-byte (1KB) field:
   for i:=0 to 1023 do b1[i]:=i and $FF; // test pattern
@@ -787,8 +781,8 @@ begin
   // Induce an error:
   Inc(b2[777]); // should create a discrepancy at offset 777
   CheckEquals(777,FirstByteDiff(@b1[0],@b2[0],1024,val1,val2),'FirstDiff(b1,b2,1024)');
-  CheckEquals($09,val1,'b1-val1');
-  CheckEquals($0A,val2,'b2-val2');
+  CheckEquals(Integer($09),val1,'b1-val1');
+  CheckEquals(Integer($0A),val2,'b2-val2');
 
 end;
 
@@ -1257,7 +1251,7 @@ begin
   StartExpectingException(EUnitTestException);
   CheckEquals(0, RaiseException, 'No error should have been reported');
   CheckEquals(0, RaiseException, 'This code is never reached! No error.');
-  CheckEquals(0, 1, 'This code should never be reached!');
+  CheckEquals(Integer(0), 1, 'This code should never be reached!');
 end;
 
 
@@ -1529,11 +1523,7 @@ begin
 {$IFDEF CLR}
   Check(True);
 {$ELSE}
-  {$IFDEF VER180}
-    Check(not IsMemoryManagerSet, 'Unknown Memory Manager loaded');
-  {$ELSE}
   Check(IsMemoryManagerSet, 'Memory Manager not loaded');
-  {$ENDIF}
 {$ENDIF}
   TestWillFail := TFailsCase.Create('Test');
   TestWillFail.FailsOnMemoryLeak := True;

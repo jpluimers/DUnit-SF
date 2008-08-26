@@ -18,7 +18,7 @@ Carried the GUITestRunner.pas changes to the main form creation over to NGUITest
 Added a display refresh timer to GUITestRunner to ensure display update in long unit tests.
 A couple of minor bug fixes.
 
-DUnit is fully backwards compatible with older versions of DUnit and FASTMM, and fully supports all versions of Delphi from version 5 through to Delphi 2006 inclusive. 
+DUnit is fully backwards compatible with older versions of DUnit and FASTMM, and fully supports all versions of Delphi from version 5 through to Delphi 2009 inclusive. 
 
 Delphi 4 and prior are NOT supported in DUnit 9.x, however. The most recent version of DUnit that supports Delphi 4 is 7.2.1, which is still available for download from the SourceForge Web site http://sourceforge.net/projects/dunit
 

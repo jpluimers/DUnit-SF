@@ -63,9 +63,8 @@ unit FastMMMemLeakMonitor;
 
 interface
 uses
-{$IFDEF VER180}
   SysUtils,
-{$ELSE}
+{$IFNDEF CLR}
   {$IFDEF FASTMM}
     FastMM4,
   {$ENDIF}
@@ -105,10 +104,6 @@ type
   end;
 
 implementation
-{$IFNDEF VER180}
-  uses
-  SysUtils;
-{$ENDIF}
 
 { TMemLeakMonitor }
 

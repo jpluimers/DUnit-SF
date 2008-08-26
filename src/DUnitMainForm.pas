@@ -114,7 +114,7 @@ begin
   FRootSuite := TTestSuite.Create('All Tests');
   for i := 1 to ParamCount do
   begin
-    if not (ParamStr(i)[1] in ['/','-']) then
+    if not (AnsiChar(ParamStr(i)[1]) in ['/','-']) then
     begin
       Suite := LoadModuleTests(ParamStr(i));
       if Suite <> nil then

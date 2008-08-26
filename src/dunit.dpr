@@ -37,13 +37,13 @@
 program DUnit;
 
 uses
-  {$IFNDEF CLR}
-    {$IFDEF FASTMM}
-      FastMM4,
-    {$ELSE}
-      ShareMem,
-    {$ENDIF}
+{$IFNDEF CLR}
+  {$IFDEF FASTMM}
+    FastMM4,
+  {$ELSE}
+    ShareMem,
   {$ENDIF}
+{$ENDIF}
   Windows,
   SysUtils,
   Forms,
@@ -72,7 +72,7 @@ begin
       Windows.AllocConsole;
     for i := 1 to ParamCount do
     begin
-      if not (ParamStr(i)[1] in SwitchChars) then
+      if not (AnsiChar(ParamStr(i)[1]) in SwitchChars) then
          RegisterModuleTests(ParamStr(i));
     end;
     TextTestRunner.RunRegisteredTests(rxbHaltOnFailures);

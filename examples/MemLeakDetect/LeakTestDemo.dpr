@@ -36,10 +36,8 @@
 program LeakTestDemo;
 
 uses
-{$IFNDEF VER180}
-  {$IFNDEF CLR}
-    FastMM4,
-  {$ENDIF}
+{$IFNDEF CLR}
+  FastMM4,
 {$ENDIF}
   SysUtils,
   TestFramework,

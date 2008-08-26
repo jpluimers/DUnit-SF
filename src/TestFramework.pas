@@ -676,13 +676,8 @@ const sExpButWasFmt    = '%sexpected: <%s> but was: <%s>';
       sExpAndActualFmt = '%sexpected and actual were: <%s>';
 
 {$UNDEF DETECTMEMLEAKS}
-{$IFDEF VER180}
-  {$IFNDEF CLR}
-    {$DEFINE DETECTMEMLEAKS}
-  {$ENDIF}
-{$ENDIF}
 {$IFDEF FASTMM}
-  {$DEFINE DETECTMEMLEAKS}
+  {$DEFINE DETECTMEMLEAKS} // Only check for memory leaks if FASTMM is specifically enabled
 {$ENDIF}
 ///////////////////////////////////////////////////////////////////////////
 implementation
