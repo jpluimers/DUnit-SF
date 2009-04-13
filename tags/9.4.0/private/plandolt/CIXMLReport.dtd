@@ -1,0 +1,21 @@
+<!ELEMENT testsuite (properties ,testcase*,system-out ,system-err ) >
+   <!ATTLIST testsuite errors CDATA #IMPLIED  >
+   <!ATTLIST testsuite failures CDATA #IMPLIED  >
+   <!ATTLIST testsuite name CDATA #IMPLIED  >
+   <!ATTLIST testsuite tests CDATA #IMPLIED  >
+   <!ATTLIST testsuite time CDATA #IMPLIED  >
+<!ELEMENT properties (property*) >
+<!ELEMENT property EMPTY >
+   <!ATTLIST property name CDATA #IMPLIED  >
+   <!ATTLIST property value CDATA #IMPLIED  >
+<!ELEMENT testcase (failure ,error ) >
+   <!ATTLIST testcase name CDATA #IMPLIED  >
+   <!ATTLIST testcase time CDATA #IMPLIED  >
+<!ELEMENT failure (#PCDATA) >
+   <!ATTLIST failure message CDATA #IMPLIED  >
+   <!ATTLIST failure type CDATA #IMPLIED  >
+<!ELEMENT error (#PCDATA) >
+   <!ATTLIST error message CDATA #IMPLIED  >
+   <!ATTLIST error type CDATA #IMPLIED  >
+<!ELEMENT system-out (#PCDATA) >
+<!ELEMENT system-err (#PCDATA) >
