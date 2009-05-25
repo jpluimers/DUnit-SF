@@ -901,12 +901,12 @@ end;
 {$ELSE}
 function PointerToLocationInfo(Addrs: Pointer): string;
 begin
-  Result := StackAddrToStr( Addrs );
+  Result := string(StackAddrToStr(Addrs));
 end;
 
 function PointerToAddressInfo(Addrs: Pointer): string;
 begin
-  Result := StackAddrToStr( Addrs );
+  Result := string(StackAddrToStr(Addrs));
 end;
 {$ENDIF}
 {$ELSE}
