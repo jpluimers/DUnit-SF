@@ -56,6 +56,9 @@ const
   rcs_version : string = '$Revision$';
 
 type
+{$IFDEF MSWINDOWS}
+  {$DEFINE MSWINDOWS_OR_CLR}
+{$ENDIF}
 {$IFDEF CLR}
 //  Pointer = Borland.Delphi.System.Pointer;
   IUnknown = interface(IInterface)
@@ -63,6 +66,8 @@ type
 
   TestAttribute = class(TCustomAttribute)
   end;
+
+  {$DEFINE MSWINDOWS_OR_CLR}
 {$ENDIF}
 
 {$IFDEF CLR}
@@ -472,13 +477,18 @@ type
     procedure CheckEquals(expected, actual: Cardinal; msg: string = ''); overload; virtual;
     procedure CheckEquals(expected, actual: int64; msg: string = ''); overload; virtual;
     procedure CheckEquals(expected, actual: string; msg: string = ''); overload; virtual;
+    procedure CheckEquals(expected, actual: ShortString; msg: string = ''); overload; virtual;
     procedure CheckEqualsString(expected, actual: string; msg: string = ''); virtual;
 {$IFNDEF CLR}
-{$IFNDEF UNICODE}
+{$IFDEF UNICODE}
+    procedure CheckEquals(expected, actual: RawByteString; msg: string = ''); overload; virtual;
+{$ELSE}
     procedure CheckEquals(expected, actual: WideString; msg: string = ''); overload; virtual;
 {$ENDIF}
     procedure CheckEqualsWideString(expected, actual: WideString; msg: string = ''); virtual;
     procedure CheckEqualsMem(expected, actual: pointer; size:longword; msg:string=''); virtual;
+{$ELSE}
+    procedure CheckEquals(expected, actual: AnsiString; msg: string = ''); overload; virtual;
 {$ENDIF}
     procedure CheckEquals(expected, actual: Boolean; msg: string = ''); overload; virtual;
     procedure CheckEqualsBin(expected, actual: longword; msg: string = ''; digits: integer=32); virtual;
@@ -489,9 +499,12 @@ type
     procedure CheckNotEquals(expected, actual: int64; msg: string = ''); overload; virtual;
     procedure CheckNotEquals(expected: extended; actual: extended; delta: extended = 0; msg: string = ''); overload; virtual;
     procedure CheckNotEquals(expected, actual: string; msg: string = ''); overload; virtual;
+    procedure CheckNotEquals(expected, actual: ShortString; msg: string = ''); overload; virtual;
     procedure CheckNotEqualsString(expected, actual: string; msg: string = ''); virtual;
 {$IFNDEF CLR}
-{$IFNDEF UNICODE}
+{$IFDEF UNICODE}
+    procedure CheckNotEquals(expected, actual: RawByteString; msg: string = ''); overload; virtual;
+{$ELSE}
     procedure CheckNotEquals(const expected, actual: WideString; msg: string = ''); overload; virtual;
 {$ENDIF}
     procedure CheckNotEqualsWideString(const expected, actual: WideString; msg: string = ''); virtual;
@@ -501,7 +514,7 @@ type
     procedure CheckNotEqualsBin(expected, actual: longword; msg: string = ''; digits: integer=32); virtual;
     procedure CheckNotEqualsHex(expected, actual: longword; msg: string = ''; digits: integer=8); virtual;
 
-    procedure CheckNotNull(obj :IUnknown; msg :string = ''); overload; virtual;
+    procedure CheckNotNull(obj :IUnknown; msg: string = ''); overload; virtual;
     procedure CheckNull(obj: IUnknown; msg: string = ''); overload; virtual;
     procedure CheckSame(expected, actual: IUnknown; msg: string = ''); overload; virtual;
     procedure CheckSame(expected, actual: TObject; msg: string = ''); overload; virtual;
@@ -509,18 +522,18 @@ type
     procedure CheckNotNull(obj: TObject; msg: string = ''); overload; virtual;
     procedure CheckNull(obj: TObject; msg: string = ''); overload; virtual;
 
-    procedure CheckException(AMethod: TTestMethod; AExceptionClass: TClass; msg :string = '');
-    procedure CheckEquals(  expected, actual: TClass; msg: string = ''); overload; virtual;
+    procedure CheckException(AMethod: TTestMethod; AExceptionClass: TClass; msg: string = '');
+    procedure CheckEquals(expected, actual: TClass; msg: string = ''); overload; virtual;
     procedure CheckInherits(expected, actual: TClass; msg: string = ''); overload; virtual;
-    procedure CheckIs(AObject :TObject; AClass: TClass; msg: string = ''); overload; virtual;
+    procedure CheckIs(AObject: TObject; AClass: TClass; msg: string = ''); overload; virtual;
 
-    procedure Fail(msg: sTring; ErrorAddrs: Pointer = nil); overload; virtual;
+    procedure Fail(msg: string; ErrorAddrs: Pointer = nil); overload; virtual;
     procedure FailEquals(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); virtual;
     procedure FailNotEquals(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); virtual;
     procedure FailNotSame(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); virtual;
 
-    function EqualsErrorMessage(expected, actual :WideString; msg: string): WideString;
-    function NotEqualsErrorMessage(expected, actual :WideString; msg: string): WideString;
+    function EqualsErrorMessage(expected, actual: WideString; msg: string): WideString;
+    function NotEqualsErrorMessage(expected, actual: WideString; msg: string): WideString;
     function NotSameErrorMessage(expected, actual, msg: string): WideString;
 
     procedure StopTests(msg: string = ''); virtual;
@@ -684,7 +697,11 @@ implementation
 uses
 {$IFDEF LINUX}
   Libc,
-{$ELSE}
+{$ENDIF}
+{$IFDEF POSIX}
+  PosixSysTime,
+{$ENDIF}
+{$IFDEF MSWINDOWS_OR_CLR}
   Windows,
   Registry,
 {$ENDIF}
@@ -801,7 +818,7 @@ var
   // SubKey of HKEY_CURRENT_USER for storing configurations in the registry (end with \)
   DUnitRegistryKey: string = ''; // How about 'Software\DUnitTests\';
 
-{$IFDEF LINUX}
+{$IFNDEF MSWINDOWS_OR_CLR}
 
 var
   PerformanceCounterInitValue: Int64;
@@ -833,7 +850,7 @@ begin
   Frequency := 1000;
   Result := true;
 end;
-{$ENDIF}
+{$ENDIF MSWINDOWS_OR_CLR}
 
 {: Convert a pointer into its string representation }
 function PtrToStr(p: Pointer): string;
@@ -1551,7 +1568,7 @@ procedure TAbstractTest.LoadConfiguration(const fileName: string; const useRegis
 var
   f: TCustomIniFile;
 begin
-{$IFNDEF LINUX}
+{$IFDEF MSWINDOWS_OR_CLR}
   if useRegistry then
     f := TRegistryIniFile.Create(DUnitRegistryKey + fileName)
   else
@@ -1577,7 +1594,7 @@ procedure TAbstractTest.SaveConfiguration(const fileName: string; const useRegis
 var
   f: TCustomIniFile;
 begin
-{$IFNDEF LINUX}
+{$IFDEF MSWINDOWS_OR_CLR}
   if useRegistry then
     f := TRegistryIniFile.Create(DUnitRegistryKey + fileName)
   else
@@ -1630,9 +1647,9 @@ var
 
 function TAbstractTest.Tests: IInterfaceList;
 begin
-   if EmptyTestList = nil then
-     EmptyTestList := TInterfaceList.Create;
-   Result := EmptyTestList;
+  if EmptyTestList = nil then
+    EmptyTestList := TInterfaceList.Create;
+  Result := EmptyTestList;
 end;
 
 
@@ -1724,22 +1741,22 @@ end;
 procedure TAbstractTest.Check(condition: Boolean; msg: string);
 begin
   FCheckCalled := True;
-    if (not condition) then
-        Fail(msg, CallerAddr);
+  if (not condition) then
+    Fail(msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckTrue(condition: Boolean; msg: string);
 begin
   FCheckCalled := True;
   if (not condition) then
-      FailNotEquals(BoolToStr(true), BoolToStr(false), msg, CallerAddr);
+    FailNotEquals(BoolToStr(true), BoolToStr(false), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckFalse(condition: Boolean; msg: string);
 begin
   FCheckCalled := True;
   if (condition) then
-      FailNotEquals(BoolToStr(false), BoolToStr(true), msg, CallerAddr);
+    FailNotEquals(BoolToStr(false), BoolToStr(true), msg, CallerAddr);
 end;
 
 
@@ -1765,7 +1782,7 @@ procedure TAbstractTest.FailNotEquals( expected,
                                        msg      : string = '';
                                        ErrorAddrs: Pointer = nil);
 begin
-    Fail(notEqualsErrorMessage(expected, actual, msg), ErrorAddrs);
+  Fail(notEqualsErrorMessage(expected, actual, msg), ErrorAddrs);
 end;
 
 procedure TAbstractTest.FailEquals(       expected,
@@ -1773,7 +1790,7 @@ procedure TAbstractTest.FailEquals(       expected,
                                           msg      : string = '';
                                           ErrorAddrs: Pointer = nil);
 begin
-    Fail(EqualsErrorMessage(expected, actual, msg), ErrorAddrs);
+  Fail(EqualsErrorMessage(expected, actual, msg), ErrorAddrs);
 end;
 
 procedure TAbstractTest.FailNotSame( expected,
@@ -1781,7 +1798,7 @@ procedure TAbstractTest.FailNotSame( expected,
                                      msg      : string = '';
                                      ErrorAddrs: Pointer = nil);
 begin
-    Fail(NotSameErrorMessage(expected, actual, msg), ErrorAddrs);
+  Fail(NotSameErrorMessage(expected, actual, msg), ErrorAddrs);
 end;
 
 procedure TAbstractTest.CheckEquals( expected,
@@ -1790,8 +1807,8 @@ procedure TAbstractTest.CheckEquals( expected,
                                      msg      : string = '');
 begin
   FCheckCalled := True;
-    if (abs(expected-actual) > delta) then
-        FailNotEquals(FloatToStr(expected), FloatToStr(actual), msg, CallerAddr);
+  if (abs(expected-actual) > delta) then
+    FailNotEquals(FloatToStr(expected), FloatToStr(actual), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckEquals(expected, actual: extended; msg: string);
@@ -1802,22 +1819,22 @@ end;
 procedure TAbstractTest.CheckNotNull(obj: IUnknown; msg: string);
 begin
   FCheckCalled := True;
-    if obj = nil then
-      Fail(msg, CallerAddr);
+  if obj = nil then
+    Fail(msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckNull(obj: IUnknown; msg: string);
 begin
   FCheckCalled := True;
-    if obj <>  nil then
-      Fail(msg, CallerAddr);
+  if obj <>  nil then
+    Fail(msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckSame(expected, actual: IUnknown; msg: string = '');
 begin
   FCheckCalled := True;
-    if (expected <> actual) then
-      FailNotSame(PtrToStr(Pointer(expected)), PtrToStr(Pointer(actual)), msg, CallerAddr);
+  if (expected <> actual) then
+    FailNotSame(PtrToStr(Pointer(expected)), PtrToStr(Pointer(actual)), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckEquals(expected, actual: string; msg: string = '');
@@ -1825,6 +1842,17 @@ begin
   FCheckCalled := True;
   if expected <> actual then
     FailNotEquals(expected, actual, msg, CallerAddr);
+end;
+
+procedure TAbstractTest.CheckEquals(expected, actual: ShortString; msg: string = '');
+begin
+  FCheckCalled := True;
+{$IFDEF CLR}
+  if string(expected) <> string(actual) then // Avoid warning from DCCIL.
+{$ELSE}
+  if expected <> actual then
+{$ENDIF}
+    FailNotEquals(WideString(expected), WideString(actual), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckEqualsString(expected, actual: string; msg: string = '');
@@ -1835,7 +1863,14 @@ begin
 end;
 
 {$IFNDEF CLR}
-{$IFNDEF UNICODE}
+{$IFDEF UNICODE}
+procedure TAbstractTest.CheckEquals(expected, actual: RawByteString; msg: string = '');
+begin
+  FCheckCalled := True;
+  if expected <> actual then
+    FailNotEquals(WideString(expected), WideString(actual), msg, CallerAddr);
+end;
+{$ELSE}
 procedure TAbstractTest.CheckEquals(expected, actual: WideString; msg: string = '');
 begin
   FCheckCalled := True;
@@ -1867,6 +1902,13 @@ begin
   if not CompareMem(expected, actual, size) then
     Fail(GetMemDiffStr(expected, actual, size, msg), CallerAddr);
 end;
+{$ELSE}
+procedure TAbstractTest.CheckEquals(expected, actual: AnsiString; msg: string = '');
+begin
+  FCheckCalled := True;
+  if expected <> actual then
+    FailNotEquals(WideString(expected), WideString(actual), msg, CallerAddr);
+end;
 {$ENDIF}
 
 procedure TAbstractTest.CheckNotEquals(expected, actual: string; msg: string = '');
@@ -1874,6 +1916,17 @@ begin
   FCheckCalled := True;
   if expected = actual then
     FailEquals(expected, actual, msg, CallerAddr);
+end;
+
+procedure TAbstractTest.CheckNotEquals(expected, actual: ShortString; msg: string = '');
+begin
+  FCheckCalled := True;
+{$IFDEF CLR}
+  if string(expected) = string(actual) then // Avoid warning from DCCIL.
+{$ELSE}
+  if expected = actual then
+{$ENDIF}
+    FailEquals(WideString(expected), WideString(actual), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckNotEqualsString(expected, actual: string; msg: string = '');
@@ -1884,7 +1937,14 @@ begin
 end;
 
 {$IFNDEF CLR}
-{$IFNDEF UNICODE}
+{$IFDEF UNICODE}
+procedure TAbstractTest.CheckNotEquals(expected, actual: RawByteString; msg: string = '');
+begin
+  FCheckCalled := True;
+  if expected = actual then
+    FailEquals(WideString(expected), WideString(actual), msg, CallerAddr);
+end;
+{$ELSE}
 procedure TAbstractTest.CheckNotEquals(const expected, actual: WideString; msg: string = '');
 begin
   FCheckCalled := True;
@@ -1957,8 +2017,8 @@ end;
 procedure TAbstractTest.CheckNotEquals(expected: extended; actual: extended; delta: extended = 0; msg: string = '');
 begin
   FCheckCalled := True;
-    if (abs(expected-actual) <= delta) then
-        FailNotEquals(FloatToStr(expected), FloatToStr(actual), msg, CallerAddr);
+  if (abs(expected-actual) <= delta) then
+    FailNotEquals(FloatToStr(expected), FloatToStr(actual), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckEquals(expected, actual: Boolean; msg: string);
@@ -2030,43 +2090,43 @@ end;
 procedure TAbstractTest.CheckSame(expected, actual: TObject; msg: string);
 begin
   FCheckCalled := True;
-    if (expected <> actual) then
-      FailNotSame(PtrToStr(Pointer(expected)), PtrToStr(Pointer(actual)), msg, CallerAddr);
+  if (expected <> actual) then
+    FailNotSame(PtrToStr(Pointer(expected)), PtrToStr(Pointer(actual)), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckNotNull(obj: TObject; msg: string);
 begin
   FCheckCalled := True;
-    if obj = nil then
-       FailNotSame('object', PtrToStr(Pointer(obj)), msg, CallerAddr);
+  if obj = nil then
+    FailNotSame('object', PtrToStr(Pointer(obj)), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckNull(obj: TObject; msg: string);
 begin
   FCheckCalled := True;
-    if obj <> nil then
-       FailNotSame('nil', PtrToStr(Pointer(obj)), msg, CallerAddr);
+  if obj <> nil then
+    FailNotSame('nil', PtrToStr(Pointer(obj)), msg, CallerAddr);
 end;
 
 function TAbstractTest.NotEqualsErrorMessage(expected, actual: WideString; msg: string): WideString;
 begin
-    if (msg <> '') then
-        msg := msg + ', ';
-    Result := Format( sExpButWasFmt , [msg, expected, actual])
+  if (msg <> '') then
+    msg := msg + ', ';
+  Result := Format( sExpButWasFmt , [msg, expected, actual])
 end;
 
 function TAbstractTest.EqualsErrorMessage(expected, actual: WideString; msg: string): WideString;
 begin
-    if (msg <> '') then
-        msg := msg + ', ';
-    Result := Format( sExpAndActualFmt, [msg, expected])
+  if (msg <> '') then
+    msg := msg + ', ';
+  Result := Format( sExpAndActualFmt, [msg, expected])
 end;
 
 function TAbstractTest.NotSameErrorMessage(expected, actual, msg: string): WideString;
 begin
-    if (msg <> '') then
-        msg := msg + ', ';
-    Result := Format( sExpButWasFmt, [msg, expected, actual])
+  if (msg <> '') then
+    msg := msg + ', ';
+  Result := Format( sExpButWasFmt, [msg, expected, actual])
 end;
 
 function TAbstractTest.BoolToStr(ABool: Boolean): string;
@@ -2710,9 +2770,16 @@ type
     count: SmallInt;
   //[...methods...]
   end;
+  TMethodEntry = packed record
+    Len: Word;
+    Code: Pointer;
+    Name: ShortString;
+   {Optional Data}
+  end;
 var
   table: ^TMethodTable;
-  AName:  ^ShortString;
+  entry: ^TMethodEntry;
+  AName:  ShortString;
   i, j:  Integer;
 {$ENDIF}
 begin
@@ -2741,21 +2808,22 @@ begin
     end;
     if table <> nil then
     begin
-      AName  := Pointer(PAnsiChar(table) + 8);
+      entry := Pointer(PAnsiChar(table) + 2);
       for i := 1 to table.count do
       begin
+        AName := entry^.Name;
         // check if we've seen the method name
         j := Low(FMethodNameList);
         while (j <= High(FMethodNameList))
-        and (string(AName^) <> FMethodNameList[j]) do
+        and (string(AName) <> FMethodNameList[j]) do
           inc(j);
         // if we've seen the name, then the method has probably been overridden
         if j > High(FMethodNameList) then
         begin
           SetLength(FMethodNameList,length(FMethodNameList)+1);
-          FMethodNameList[j] := string(AName^);
+          FMethodNameList[j] := string(AName);
         end;
-        AName := Pointer(PAnsiChar(AName) + length(AName^) + 7)
+        entry := Pointer(PAnsiChar(entry) + entry^.Len);
       end;
     end;
     aclass := aclass.ClassParent;
