@@ -1,0 +1,44 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{f9855863-5864-415a-8d12-d34346151a08}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Projects Include="DUnit.dproj" />
+    <Projects Include="DUnitTests.dproj" />
+  </ItemGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Default.Personality</Borland.Personality>
+    <Borland.ProjectType />
+    <BorlandProject>
+  <BorlandProject xmlns=""> <Default.Personality> </Default.Personality> </BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <Target Name="DUnit">
+    <MSBuild Projects="DUnit.dproj" Targets="" />
+  </Target>
+  <Target Name="DUnit:Clean">
+    <MSBuild Projects="DUnit.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="DUnit:Make">
+    <MSBuild Projects="DUnit.dproj" Targets="Make" />
+  </Target>
+  <Target Name="DUnitTests">
+    <MSBuild Projects="DUnitTests.dproj" Targets="" />
+  </Target>
+  <Target Name="DUnitTests:Clean">
+    <MSBuild Projects="DUnitTests.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="DUnitTests:Make">
+    <MSBuild Projects="DUnitTests.dproj" Targets="Make" />
+  </Target>
+  <Target Name="Build">
+    <CallTarget Targets="DUnit;DUnitTests" />
+  </Target>
+  <Target Name="Clean">
+    <CallTarget Targets="DUnit:Clean;DUnitTests:Clean" />
+  </Target>
+  <Target Name="Make">
+    <CallTarget Targets="DUnit:Make;DUnitTests:Make" />
+  </Target>
+  <Import Condition="Exists('$(MSBuildBinPath)\Borland.Group.Targets')" Project="$(MSBuildBinPath)\Borland.Group.Targets" />
+</Project>
