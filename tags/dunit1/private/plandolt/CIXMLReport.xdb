@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xdb="http://www.borland.com/schemas/delphi/6.0/XMLDataBinding">
+  <xs:element name="testsuite" type="testsuiteType"/>
+  <xs:complexType name="testsuiteType">
+    <xs:annotation>
+      <xs:appinfo xdb:docElement="testsuite"/>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="testcase" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element ref="system-out"/>
+      <xs:element ref="system-err"/>
+    </xs:sequence>
+    <xs:attribute name="errors" type="xs:string">
+      <xs:annotation>
+        <xs:appinfo xdb:dataType="string"/>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="failures" type="xs:string">
+      <xs:annotation>
+        <xs:appinfo xdb:dataType="string"/>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="name" type="xs:string">
+      <xs:annotation>
+        <xs:appinfo xdb:dataType="string"/>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="tests" type="xs:string">
+      <xs:annotation>
+        <xs:appinfo xdb:dataType="string"/>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="time" type="xs:string">
+      <xs:annotation>
+        <xs:appinfo xdb:dataType="string"/>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:element name="testcase" type="testcaseType"/>
+  <xs:complexType name="testcaseType">
+    <xs:annotation>
+      <xs:appinfo xdb:repeated="True"/>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element ref="failure"/>
+      <xs:element ref="error"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string">
+      <xs:annotation>
+        <xs:appinfo xdb:dataType="string"/>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="time" type="xs:string">
+      <xs:annotation>
+        <xs:appinfo xdb:dataType="string"/>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:element name="failure" type="failureType"/>
+  <xs:complexType name="failureType">
+    <xs:sequence/>
+    <xs:attribute name="message" type="xs:string"/>
+    <xs:attribute name="type" type="xs:string"/>
+  </xs:complexType>
+  <xs:element name="error" type="errorType"/>
+  <xs:complexType name="errorType">
+    <xs:sequence/>
+    <xs:attribute name="message" type="xs:string"/>
+    <xs:attribute name="type" type="xs:string"/>
+  </xs:complexType>
+  <xs:element name="system-out" type="system-outType"/>
+  <xs:simpleType name="system-outType">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+  <xs:element name="system-err" type="system-errType"/>
+  <xs:simpleType name="system-errType">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+</xs:schema>

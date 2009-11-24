@@ -1,0 +1,10 @@
+Pls DO NOT DISTRIBUTE...
+
+I've checked all this in prematurely so I can work on it some at work and at 
+home.
+
+Some of the dprs won't compile on their own yet because they are dependent on 
+some OpenGL stuff. I need to make some open source unit versions of the OpenGL 
+stuff before I can release this example. 
+
+Chrismo 9/10/2000
