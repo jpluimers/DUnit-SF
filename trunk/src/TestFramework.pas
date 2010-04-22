@@ -2385,16 +2385,11 @@ begin
 end;
 
 procedure TTestCase.Invoke(AMethod: TTestMethod);
-{$IFDEF CLR}
-var
-  Args: array of System.Object;
-{$ENDIF}
 begin
   FTestMethodInvoked := True;
 {$IFDEF CLR}
-  Args := nil;
   try
-    GetType.InvokeMember(AMethod, BindingFlags.Public or BindingFlags.Instance or BindingFlags.InvokeMethod, nil, Self, Args);
+    GetType.InvokeMember(AMethod, BindingFlags.Public or BindingFlags.Instance or BindingFlags.InvokeMethod, nil, Self, nil);
   except
     on E:TargetInvocationException do
       raise E.InnerException;
@@ -2765,11 +2760,11 @@ var
 
       for I := 0 to System.Array(CustomAttr).Length - 1 do
       begin
-        if CustomAttr[I].ClassNameIs('TestAttribute') then
+        if CustomAttr[I] is TestAttribute then
         begin
           Result := true;
           Break;
-        end;;
+        end;
       end;
     end;
   end;
