@@ -45,7 +45,7 @@ unit TestFramework;
 interface
 uses
 {$IFDEF CLR}
-  System.Reflection, System.Diagnostics, System.IO,
+  System.Reflection, System.Diagnostics, System.IO, System.Collections.Specialized,
 {$ENDIF}
   SysUtils,
   Classes,
@@ -644,7 +644,11 @@ type
 
   TMethodEnumerator = class
   protected
+{$IFDEF CLR}
+    FMethodNameList: StringCollection;
+{$ELSE}
     FMethodNameList:  array of string;
+{$ENDIF}
     function GetNameOfMethod(idx: integer):  string;
     function GetMethodCount: Integer;
   public
@@ -2744,8 +2748,7 @@ end;
 constructor TMethodEnumerator.Create(AClass: TClass);
 {$IFDEF CLR}
 var
-  I, L: integer;
-  T: System.Type;
+  I: integer;
   Methods: array of MethodInfo;
 
   function IsTest(AMethod: MethodInfo): Boolean;
@@ -2758,7 +2761,7 @@ var
     begin
       CustomAttr := AMethod.GetCustomAttributes(false);
 
-      for I := 0 to System.Array(CustomAttr).Length - 1 do
+      for I := 0 to Length(CustomAttr) - 1 do
       begin
         if CustomAttr[I] is TestAttribute then
         begin
@@ -2789,17 +2792,11 @@ var
 begin
   inherited Create;
 {$IFDEF CLR}
-  T := AClass.ClassInfo;
-  Methods := T.GetMethods();
-  L := 0;
-  SetLength(FMethodNameList, L);
+  FMethodNameList := StringCollection.Create;
+  Methods := AClass.ClassInfo.GetMethods();
   for I := 0 to System.Array(Methods).Length - 1 do
     if IsTest(Methods[I]) then
-    begin
-      L := L + 1;
-      SetLength(FMethodNameList, L);
-      FMethodNameList[L-1] := Methods[I].Name;
-    end;
+      FMethodNameList.Add(Methods[I].Name)
 {$ELSE}
   while aclass <> nil do
   begin
@@ -2837,7 +2834,11 @@ end;
 
 function TMethodEnumerator.GetMethodCount: Integer;
 begin
+{$IFDEF CLR}
+  FMethodNameList.Count;
+{$ELSE}
   Result := Length(FMethodNameList);
+{$ENDIF}
 end;
 
 function TMethodEnumerator.GetNameOfMethod(idx: integer): string;
