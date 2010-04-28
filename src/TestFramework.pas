@@ -2754,22 +2754,14 @@ var
   function IsTest(AMethod: MethodInfo): Boolean;
   var
     CustomAttr: array of System.Object;
-    I: integer;
   begin
-    Result := false;
     if AMethod.IsPublic then
     begin
-      CustomAttr := AMethod.GetCustomAttributes(false);
-
-      for I := 0 to Length(CustomAttr) - 1 do
-      begin
-        if CustomAttr[I] is TestAttribute then
-        begin
-          Result := true;
-          Break;
-        end;
-      end;
-    end;
+      CustomAttr := AMethod.GetCustomAttributes(typeof(TestAttribute), false);
+      Result :=  Length(CustomAttr) > 0;
+    end
+    else
+      Result := false;
   end;
 {$ELSE}
 type
@@ -2835,7 +2827,7 @@ end;
 function TMethodEnumerator.GetMethodCount: Integer;
 begin
 {$IFDEF CLR}
-  FMethodNameList.Count;
+  Result := FMethodNameList.Count;
 {$ELSE}
   Result := Length(FMethodNameList);
 {$ENDIF}
