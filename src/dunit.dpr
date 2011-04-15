@@ -54,7 +54,8 @@ uses
   DUnitMainForm in 'DUnitMainForm.pas',
   DUnitAbout in 'DUnitAbout.pas' {DUnitAboutBox},
   TestModules in 'TestModules.pas',
-  TestExtensions in 'TestExtensions.pas';
+  TestExtensions in 'TestExtensions.pas',
+  DUnitConsts in 'DUnitConsts.pas';
 
 {$R *.RES}
 {$R versioninfo.res }
@@ -98,11 +99,11 @@ begin
   else
   begin
     Application.Initialize;
-    Application.Title := 'DUnit - An Extreme Testing Framework';
+    Application.Title := sTitle;
     if not SysUtils.FindCmdLineSwitch('nologo', ['/','-'], true) then
       DUnitAbout.Splash;
     Application.CreateForm(TDUnitForm, DUnitForm);
-    try
+  try
       Application.Run;
     except
        on e:Exception do

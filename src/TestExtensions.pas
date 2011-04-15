@@ -43,7 +43,8 @@ interface
 uses
   Classes,
   IniFiles,
-  TestFramework;
+  TestFramework,
+  DUnitConsts;
 
 type
   TMemorySize = Longint;
@@ -320,7 +321,7 @@ end;
 
 function TTestSetup.GetName: string;
 begin
-  Result := Format('Setup decorator (%s)', [inherited GetName]);
+  Result := Format(sSetupDecorator, [inherited GetName]);
 end;
 
 { TRepeatedTest }
@@ -383,7 +384,7 @@ end;
 {$IFNDEF CLR}
 function TMemoryTest.GetName: string;
 begin
-  Result := Format('Test memory of %s', [getTest.Name]);
+  Result := Format(sTestMemory, [getTest.Name]);
 end;
 
 function TMemoryTest.MemoryAllocated: TMemorySize;
@@ -420,7 +421,7 @@ begin
     Memory := MemoryAllocated - Memory;
 
     if LocalResult.WasSuccessful then
-      CheckEquals(0, Memory, Format('Memory use changed by %d bytes', [Memory]))
+      CheckEquals(0, Memory, Format(sMemoryChanged, [Memory]))
     else
       inherited;
   finally
