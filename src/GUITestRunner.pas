@@ -45,7 +45,9 @@ uses
   Math,
   Graphics, Controls, Forms, 
   ComCtrls, ExtCtrls, StdCtrls, ImgList, Buttons, Menus, ActnList,
-  Classes, IniFiles, ToolWin;
+  Classes, IniFiles, ToolWin, DUnitConsts;
+
+
 
 const
   {: Section of the dunit.ini file where GUI information will be stored }
@@ -2017,10 +2019,6 @@ begin
 end;
 
 const
-  PopupTitle   = 'TestCase Run-Time Applied Properties';
-  PopupPrevious= ' Previous';
-  PopupRun     = ' Run Selected Test';
-  PopupNext    = ' Next';
   NoChecksStrT = ' FailsOnNoChecksExecuted  := True ';
   NoChecksStrF = ' FailsOnNoChecksExecuted  := False';
   MemLeakStrT  = ' FailsOnMemoryLeak        := True ';
@@ -2097,8 +2095,8 @@ var
   ImageSize: TSize;
 begin
   if GetTextExtentPoint32(ACanvas.Handle,
-                          PChar(PopupTitle),
-                          Length(PopupTitle),
+                          PChar(sPopupTitle),
+                          Length(sPopupTitle),
                           ImageSize) then
   begin
     Width  := ImageSize.cx + 60;
@@ -2169,25 +2167,25 @@ end;
 procedure TGUITestRunner.TestCasePropertiesDrawItem(Sender: TObject;
   ACanvas: TCanvas; ARect: TRect; Selected: Boolean);
 begin
-  MenuLooksInactive(ACanvas, ARect, Selected, PopupTitle, DT_CENTER, False);
+  MenuLooksInactive(ACanvas, ARect, Selected, sPopupTitle, DT_CENTER, False);
 end;
 
 procedure TGUITestRunner.Previous1DrawItem(Sender: TObject;
   ACanvas: TCanvas; ARect: TRect; Selected: Boolean);
 begin
-  MenuLooksActive(ACanvas, ARect, Selected, PopupPrevious, DT_LEFT);
+  MenuLooksActive(ACanvas, ARect, Selected, sPopupPrevious, DT_LEFT);
 end;
 
 procedure TGUITestRunner.RunSelectedTest1DrawItem(Sender: TObject;
   ACanvas: TCanvas; ARect: TRect; Selected: Boolean);
 begin
-  MenuLooksActive(ACanvas, ARect, Selected, PopupRun, DT_LEFT);
+  MenuLooksActive(ACanvas, ARect, Selected, sPopupRun, DT_LEFT);
 end;
 
 procedure TGUITestRunner.Next1DrawItem(Sender: TObject; ACanvas: TCanvas;
   ARect: TRect; Selected: Boolean);
 begin
-  MenuLooksActive(ACanvas, ARect, Selected, PopupNext, DT_LEFT);
+  MenuLooksActive(ACanvas, ARect, Selected, sPopupNext, DT_LEFT);
 end;
 
 procedure TGUITestRunner.FailNoCheckExecutedMenuItemDrawItem(
