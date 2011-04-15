@@ -235,8 +235,8 @@ begin
     QApplication_sendEvent(TWidgetControl(Control).Handle, evMouse);
 {$ELSE}
     P := SmallPoint(Control.Width  div 2, Control.Height div 2);
-    PostMessage(TWinControl(Control).Handle, WM_LBUTTONDOWN, 0, Longint(P));
-    PostMessage(TWinControl(Control).Handle, WM_LBUTTONUP, 0,   Longint(P));
+    PostMessage(TWinControl(Control).Handle, WM_LBUTTONDOWN, 0, MakeLParam(P.x, P.y));
+    PostMessage(TWinControl(Control).Handle, WM_LBUTTONUP, 0,   MakeLParam(P.x, P.y));
 {$ENDIF}
     Sleep(ActionDelay);
   end;
@@ -382,7 +382,7 @@ begin
     SetKeyboardStateDown(TWinControl(Control), ShiftState);
     if ssAlt in ShiftState then
     begin
-      PostMessage(TWinControl(Control).Handle, WM_SYSKEYDOWN, Key, integer($20000000));
+      PostMessage(TWinControl(Control).Handle, WM_SYSKEYDOWN, Key, Windows.LPARAM($20000000));
     end
     else
     begin
@@ -401,11 +401,11 @@ begin
 {$ELSE}
     if ssAlt in ShiftState then
     begin
-      PostMessage(TWinControl(Control).Handle, WM_SYSKEYUP, Key, integer($E0000000));
+      PostMessage(TWinControl(Control).Handle, WM_SYSKEYUP, Key, Windows.LPARAM($E0000000));
     end
     else
     begin
-      PostMessage(TWinControl(Control).Handle, WM_KEYUP, Key, integer($C0000000));
+      PostMessage(TWinControl(Control).Handle, WM_KEYUP, Key, Windows.LPARAM($C0000000));
     end;
     SetKeyboardStateUp( TWinControl(Control), ShiftState );
 {$ENDIF}

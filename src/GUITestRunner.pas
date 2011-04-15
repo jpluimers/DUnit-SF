@@ -543,7 +543,7 @@ var
 begin
   assert(assigned(Node));
 
-  idx  := Integer(Node.data);
+  idx  := NativeInt(Node.data);
   assert((idx >= 0) and (idx < FTests.Count));
   result := FTests[idx] as ITest;
 end;

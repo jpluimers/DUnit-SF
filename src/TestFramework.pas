@@ -2792,13 +2792,7 @@ begin
 {$ELSE}
   while aclass <> nil do
   begin
-    // *** HACK ALERT *** !!!
-    // Review System.MethodName to grok how this method works
-    asm
-      mov  EAX, [aclass]
-      mov  EAX,[EAX].vmtMethodTable { fetch pointer to method table }
-      mov  [table], EAX
-    end;
+    table := PPointer(PAnsiChar(aclass) + vmtMethodTable)^;
     if table <> nil then
     begin
       entry := Pointer(PAnsiChar(table) + 2);
