@@ -34,7 +34,8 @@ unit TestModules;
 interface
 uses
   Windows,
-  TestFramework;
+  TestFramework,
+  DUnitConsts;
 
 
 const
@@ -76,19 +77,19 @@ begin
 
   LibHandle := LoadLibrary(PChar(LibName));
   if LibHandle = 0 then
-    raise EDUnitException.Create(Format('Could not load module %s: %s', [LibName, SysErrorMessage(GetLastError)]))
+    raise EDUnitException.Create(Format(sLoadModule, [LibName, SysErrorMessage(GetLastError)]))
   else
   begin
     GetTest := GetProcAddress(LibHandle, 'Test');
     if not Assigned(GetTest) then
-      raise EDUnitException.Create(Format('Module "%s" does not export a "Test" function: %s', [LibName, SysErrorMessage(GetLastError)]))
+      raise EDUnitException.Create(Format(sExportFunction, [LibName, SysErrorMessage(GetLastError)]))
     else
     begin
       U := GetTest;
       if U = nil then
         U := TestFramework.TestSuite(LibName, []);
       if 0 <> U.QueryInterface(ITest, Result) then
-        raise EDUnitException.Create(Format('Module "%s.Test" did not return an ITest', [LibName]))
+        raise EDUnitException.Create(Format(sReturnInterface, [LibName]))
       else
       begin
         Assert(Result <> nil);

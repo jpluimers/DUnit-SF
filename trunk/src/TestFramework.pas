@@ -49,7 +49,8 @@ uses
 {$ENDIF}
   SysUtils,
   Classes,
-  IniFiles;
+  IniFiles,
+  DUnitConsts;
 
 const
   rcs_id: string = '#(@)$Id$';
@@ -1125,7 +1126,7 @@ end;
 
 procedure TTestResult.addListener(listener: ITestListener);
 begin
-  assert(assigned(listener), 'listener is nil');
+  assert(assigned(listener), sNilListener);
   FListeners.add(listener);
 end;
 
@@ -1184,7 +1185,7 @@ begin
   except
     on e: Exception do
     begin
-      AddError(test, e, ExceptAddr, 'SetUp FAILED: ');
+      AddError(test, e, ExceptAddr, sFailedSetup);
     end;
   end;
 end;
@@ -1197,7 +1198,7 @@ begin
     test.TearDown;
   except
     on e: Exception do
-      AddError(test, e, ExceptAddr, 'TearDown FAILED: ');
+      AddError(test, e, ExceptAddr, sFailedTearDown);
   end;
   QueryPerformanceCounter(LTime);
   test.StopTime := LTime;
@@ -1510,7 +1511,7 @@ end;
 
 constructor TStatusToResultAdapter.Create(TestResult: TTestResult);
 begin
-  Assert(TestResult <> nil, 'Expected non nil TestResult');
+  Assert(TestResult <> nil, sNonNiltestresult);
   inherited Create;
 
   FTestResult := TestResult;
@@ -1618,7 +1619,7 @@ begin
       f := TIniFile.Create(fileName);
 
   try
-    SaveConfiguration(f, 'Tests');
+    SaveConfiguration(f, sTests);
     f.UpdateFile;
   finally
     f.free
@@ -1980,7 +1981,7 @@ begin
   if CompareMem(expected, actual, size) then
   begin
     if msg <>'' then msg := msg + ', ';
-    Fail(msg+'Memory content was identical', CallerAddr);
+    Fail(sIdenticalContent + msg, CallerAddr);
   end;
 end;
 {$ENDIF}
@@ -2158,7 +2159,7 @@ begin
   try
     if FExpectedException <> nil then
     begin
-      Fail( Format( 'Expected exception "%s" but there was none. %s',
+      Fail( Format( sExpectedException,
                                         [FExpectedException.ClassName,
                                         Msg]),
                                         CallerAddr);
@@ -2174,7 +2175,7 @@ const
   AssemblerRet = $C3;
 begin
   if byte(MethodPointer^) = AssemblerRet then
-    Fail('Empty test', MethodPointer);
+    Fail(sEmptyTest, MethodPointer);
 end;
 {$ENDIF}
 
@@ -2195,7 +2196,7 @@ begin
     end;
   end;
   if Assigned(AExceptionClass) then
-    FailNotEquals(AExceptionClass.ClassName, 'nothing', msg, CallerAddr)
+    FailNotEquals(AExceptionClass.ClassName, sExceptionNothig, msg, CallerAddr)
 end;
 
 procedure TAbstractTest.CheckEquals(expected, actual: TClass; msg: string);
@@ -2312,7 +2313,7 @@ var
   I: Integer;
 begin // Note the 0th element is reserved for old code value.
   if Length(AllowedList) >= Length(FAllowedLeakList) then
-    fail('Too many values in for AllowedLeakArray. Limit = ' +
+    fail( sAllowLeakArrayValues +
       IntToStr(Length(FAllowedLeakList) - 1));
   for I := 1 to Length(FAllowedLeakList) - 1 do
   begin
@@ -2418,7 +2419,7 @@ end;
 
 procedure TTestCase.RunTest(testResult: TTestResult);
 begin
-  assert(assigned(FMethod), 'Method "' + FTestName + '" not found');
+  assert(assigned(FMethod), sMethodNotFound + FTestName + '" ');
   FExpectedException := nil;
   try
     try
@@ -2431,7 +2432,7 @@ begin
       FCheckCalled := False;
       Invoke(FMethod);
       if FFailsOnNoChecksExecuted and (not FCheckCalled) then
-        Fail('No checks executed in TestCase', testResult.FMethodPtr);
+        Fail(sNoChecksExecuted, testResult.FMethodPtr);
       StopExpectingException;
     except
       on E: ETestFailure  do
@@ -2443,7 +2444,7 @@ begin
         if  not Assigned(FExpectedException) then
           raise
         else if not E.ClassType.InheritsFrom(fExpectedException) then
-          FailNotEquals(fExpectedException.ClassName, E.ClassName, 'unexpected exception', ExceptAddr);
+          FailNotEquals(fExpectedException.ClassName, E.ClassName, sExceptionUnexpected, ExceptAddr);
       end;
     end;
   finally
