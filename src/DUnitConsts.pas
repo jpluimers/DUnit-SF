@@ -47,6 +47,11 @@ resourcestring
   sDecodeTime = 'Time: %d:%2.2d:%2.2d.%d';
   sPressReturn = 'Press <RETURN> to continue.';
 
+  sUnsupportedTypeInfo = '<Unsupported type info>';
+{$IFDEF CLR}
+  sUnkownFieldType = '<Unknown>';
+{$ENDIF CLR}
+
 implementation
 
 end.

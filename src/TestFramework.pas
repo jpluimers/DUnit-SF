@@ -50,6 +50,7 @@ uses
   SysUtils,
   Classes,
   IniFiles,
+  TypInfo,
   DUnitConsts;
 
 const
@@ -59,6 +60,10 @@ const
 type
 {$IFDEF MSWINDOWS}
   {$DEFINE MSWINDOWS_OR_CLR}
+  {$DEFINE MSWINDOWS_OR_POSIX}
+{$ENDIF}
+{$IFDEF POSIX}
+  {$DEFINE MSWINDOWS_OR_POSIX}
 {$ENDIF}
 {$IFDEF CLR}
 //  Pointer = Borland.Delphi.System.Pointer;
@@ -369,7 +374,6 @@ type
     property OverRides: integer read FOverRides write FOverRides;
   end;
 
-
   TAbstractTest = class(TInterfacedObject, ITest)
   protected
     FTestName: string;
@@ -529,8 +533,8 @@ type
     procedure CheckIs(AObject: TObject; AClass: TClass; msg: string = ''); overload; virtual;
 
     procedure Fail(msg: string; ErrorAddrs: Pointer = nil); overload; virtual;
-    procedure FailEquals(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); virtual;
-    procedure FailNotEquals(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); virtual;
+    procedure FailEquals(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); overload; virtual;
+    procedure FailNotEquals(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); overload; virtual;
     procedure FailNotSame(expected, actual: WideString; msg: string = ''; ErrorAddrs: Pointer = nil); virtual;
 
     function EqualsErrorMessage(expected, actual: WideString; msg: string): WideString;
@@ -578,7 +582,6 @@ type
       write SetIgnoreSetUpTearDownLeaks;
   end;
 
-
   TTestCase = class(TAbstractTest, ITest)
   protected
     fMethod:    TTestMethod;
@@ -594,6 +597,45 @@ type
   published
   end;
 
+{$IFDEF CONDITIONALEXPRESSIONS}
+  {$IF (DEFINED(MSWINDOWS) OR DEFINED(POSIX)) AND (CompilerVersion >= 21.0)}
+    {$DEFINE GENERICS} // Requires generics and RTTI (Delphi 2010)
+  {$ELSEIF DEFINED(CLR) AND (CompilerVersion >= 19.0)}
+    {$DEFINE GENERICS} // Requires generics (Delphi 2007)
+  {$IFEND}
+{$ENDIF}
+
+{$IFDEF GENERICS}
+
+{$IF DEFINED(MSWINDOWS) OR DEFINED(POSIX)}
+  TValueData = Pointer;
+  PObject = ^TObject;
+{$ELSE IF DEFINED(CLR)}
+  TValueData = TObject;
+{$IFEND}
+
+  TConverter<T> = class
+  private
+    class function ValueToString(Info: PTypeInfo; Size: Cardinal; Value: TValueData): string;
+  public
+    class function ToString(Value: T): string; reintroduce;
+  end;
+
+  TGenericTestCase = class(TTestCase, ITest)
+  private
+    class function Compare<T>(const Expected, Actual: T): Integer;
+  public
+    procedure CheckEquals<T>(Expected, Actual: T; Msg: string = ''); overload;
+    procedure CheckNotEquals<T>(Expected, Actual: T; Msg: string = ''); overload;
+
+    procedure FailEquals<T>(Expected, Actual: T; Msg: string = ''; ErrorAddrs: Pointer = nil); overload;
+    procedure FailNotEquals<T>(Expected, Actual: T; Msg: string = ''; ErrorAddrs: Pointer = nil); overload;
+
+    function EqualsErrorMessage<T>(Expected, Actual: T; Msg: string): string; overload;
+    function NotEqualsErrorMessage<T>(Expected, Actual: T; Msg: string): string; overload;
+  end;
+
+{$ENDIF GENERICS}
 
   TTestSuite = class(TAbstractTest, ITestSuite, ITest)
   protected
@@ -699,17 +741,16 @@ const sExpButWasFmt    = '%sexpected: <%s> but was: <%s>';
 {$ENDIF}
 ///////////////////////////////////////////////////////////////////////////
 implementation
+
 uses
-{$IFDEF LINUX}
-  Libc,
-{$ENDIF}
-{$IFDEF POSIX}
-  PosixSysTime,
-{$ENDIF}
-{$IFDEF MSWINDOWS_OR_CLR}
-  Windows,
-  Registry,
-{$ENDIF}
+{$IFDEF GENERICS}
+{$IFDEF MSWINDOWS_OR_POSIX}
+  Rtti, Generics.Defaults,
+{$ENDIF MSWINDOWS_OR_POSIX}
+{$IFDEF CLR}
+  System.Collections.Generic,
+{$ENDIF CLR}
+{$ENDIF GENERICS}
 {$IFDEF USE_JEDI_JCL}
   JclDebug,
 {$ENDIF}
@@ -719,7 +760,16 @@ uses
 {$IFDEF madExcept}
   madStackTrace,
 {$ENDIF}
-  TypInfo;
+{$IFDEF LINUX}
+  Libc;
+{$ENDIF}
+{$IFDEF POSIX}
+  PosixSysTime;
+{$ENDIF}
+{$IFDEF MSWINDOWS_OR_CLR}
+  Windows,
+  Registry;
+{$ENDIF}
 
 {$STACKFRAMES ON} // Required to retrieve caller's address
 
@@ -2976,6 +3026,238 @@ procedure ClearRegistry;
 begin
   __TestRegistry := nil;
 end;
+
+{$IFDEF GENERICS}
+
+{ TConverter<T> }
+
+class function TConverter<T>.ValueToString(Info: PTypeInfo; Size: Cardinal;
+  Value: TValueData): string;
+{$IF DEFINED(MSWINDOWS) OR DEFINED(POSIX)}
+var
+  I, MinValue: Integer;
+  LType: TRttiType;
+  LContext: TRttiContext;
+  LField: TRttiField;
+  LValue: TValue;
+  Buffer: Pointer;
+  Fmt: string;
+begin
+  if Info = nil then
+    Exit(sUnsupportedTypeInfo);
+
+  case Info.Kind of
+    tkInteger:
+      case GetTypeData(Info).OrdType of
+        otSByte, otUByte: Result := IntToStr(PByte(Value)^);
+        otSWord, otUWord: Result := IntToStr(PWord(Value)^);
+        otSLong, otULong: Result := IntToStr(PInteger(Value)^);
+      end;
+    tkInt64: Result := IntToStr(PInt64(Value)^);
+    tkPointer,
+    tkInterface:
+      Result := '$' + IntToHex(NativeInt(PPointer(Value)^), SizeOf(Pointer) * 2);
+    tkString: Result := string(PShortString(Value)^);
+    tkLString: Result := string(PAnsiString(Value)^);
+    tkUString: Result := PUnicodeString(Value)^;
+    tkWString: Result := string(PWideString(Value)^);
+    tkChar: Result := Char(PAnsiChar(Value)^);
+    tkWChar: Result := PWideChar(Value)^;
+    tkEnumeration: Result := GetEnumName(Info, PByte(Value)^);
+    tkFloat:
+      case GetTypeData(Info).FloatType of
+        ftSingle: Result := FloatToStr(PSingle(Value)^);
+        ftDouble: Result := FloatToStr(PDouble(Value)^);
+        ftExtended: Result := FloatToStr(PExtended(Value)^);
+        ftComp: Result := FloatToStr(PComp(Value)^);
+        ftCurr: Result := FloatToStr(PCurrency(Value)^);
+      end;
+    tkSet:
+      begin
+        I := 0;
+        Move(Value^, I, Size);
+        Result := SetToString(Info, I, True);
+      end;
+    tkClass: Result := '$' + IntToHex(NativeInt(PPointer(Value)^), SizeOf(Pointer) * 2) +
+      ' [' + PObject(Value)^.ClassName + ']';
+    tkVariant: Result := PVariant(Value)^;
+    tkRecord:
+      begin
+        Result := '(';
+        LType := LContext.GetType(Info);
+        if LType <> nil then
+        begin
+          for LField in LType.AsRecord.GetFields do
+          begin
+            LValue := LField.GetValue(Value);
+            case LValue.Kind of
+              tkString, tkLString, tkWString, tkUString: Fmt := '%s%s="%s";'
+            else
+              Fmt := '%s%s=%s;';
+            end;
+            Result := Format(Fmt, [Result, LField.Name,
+              ValueToString(LValue.TypeInfo, LValue.DataSize, LValue.GetReferenceToRawData)]);
+          end;
+          if Length(Result) > 0 then
+            SetLength(Result, Length(Result) - 1);
+          Result := Result + ')';
+        end
+        else
+          Result := string(Info.Name);
+      end;
+  else
+    Result := string(Info.Name);
+  end;
+end;
+{$ELSE IF DEFINED(CLR)}
+var
+  LField: FieldInfo;
+  LValue: TObject;
+  Fmt: string;
+begin
+  if Info = nil then
+  begin
+    Result := sUnsupportedTypeInfo;
+    Exit;
+  end;
+
+  case Info.Kind of
+    tkInteger,
+    tkInt64: Result := IntToStr(Convert.ToInt64(Value));
+    tkString: Result := string(ShortString(Value));
+    tkLString: Result := string(AnsiString(Value));
+    tkWString: Result := string(WideString(Value));
+    tkChar: Result := Char(AnsiChar(Value));
+    tkWChar: Result := WideChar(Value);
+    tkEnumeration: Result := GetEnumName(Info, Byte(Value));
+    tkFloat:
+      case GetTypeData(Info).FloatType of
+        ftSingle: Result := FloatToStr(Single(Value));
+        ftDouble: Result := FloatToStr(Double(Value));
+        ftExtended: Result := FloatToStr(Extended(Value));
+        ftComp: Result := FloatToStr(Comp(Value));
+        ftCurr: Result := FloatToStr(Currency(Value));
+      end;
+    tkSet: Result := GetSetNames(Info, Convert.ToInt32(Value), True);
+    tkClass,
+    tkInterface:
+      begin
+        try
+          Result := '$' + IntToHex(Convert.ToInt64(Value), IntPtr.Size * 2) +
+            ' [' + Value.ClassName + ']';
+        except
+          Result := 'HashCode = $' + IntToHex(Value.GetHashCode, IntPtr.Size * 2) +
+            ' [' + Value.ClassName + ']';
+        end;
+      end;
+    tkRecord:
+      begin
+        Result := '(';
+        begin
+          for LField in Info.GetFields do
+          begin
+            if System.Type.GetTypeCode(LField.FieldType) = TypeCode.String then
+              Fmt := '%s%s="%s";'
+            else
+              Fmt := '%s%s=%s;';
+            LValue := LField.GetValue(Value);
+            if LValue <> nil then
+              Result := Format(Fmt, [Result, LField.Name,
+                ValueToString(LValue.GetType, SizeOf(LValue.GetType), LValue)])
+            else
+              Result := Format(Fmt, [Result, LField.Name, sUnkownFieldType])
+          end;
+          if Length(Result) > 0 then
+            SetLength(Result, Length(Result) - 1);
+
+          Result := Result + ')';
+        end
+      end;
+  else
+    Result := string(Info.Name);
+  end;
+end;
+{$IFEND}
+
+class function TConverter<T>.ToString(Value: T): string;
+begin
+  Result := ValueToString(TypeInfo(T), SizeOf(T), {$IFNDEF CLR}@{$ENDIF}Value);
+end;
+
+{ TGenericTestCase }
+
+{$IFDEF CLR}
+type
+  TComparer<T> = class(Comparer<T>);
+{$ENDIF CLR}
+
+class function TGenericTestCase.Compare<T>(const Expected, Actual: T): Integer;
+var
+  FComparer: IComparer<T>;
+begin
+  FComparer := TComparer<T>.Default;
+
+{$IF DEFINED(MSWINDOWS) OR DEFINED(POSIX)}
+  Result := FComparer.Compare(Expected, Actual);
+{$ELSE IF DEFINED(CLR)}
+  try
+    Result := FComparer.Compare(Expected, Actual);
+  except
+    on E: ArgumentException do
+    begin
+      if Expected.Equals(Actual) then
+        Result := 0
+      else
+        Result := 1;
+    end;
+  end;
+{$IFEND}
+end;
+
+procedure TGenericTestCase.CheckEquals<T>(Expected, Actual: T; Msg: string = '');
+begin
+  FCheckCalled := True;
+  if Compare<T>(Expected, Actual) <> 0 then
+    FailNotEquals<T>(Expected, Actual, Msg);
+end;
+
+procedure TGenericTestCase.CheckNotEquals<T>(Expected, Actual: T; Msg: string = '');
+begin
+  FCheckCalled := True;
+  if Compare<T>(Expected, Actual) = 0 then
+    FailEquals<T>(Expected, Actual, Msg);
+end;
+
+procedure TGenericTestCase.FailEquals<T>(Expected, Actual: T; Msg: string;
+  ErrorAddrs: Pointer);
+begin
+  Fail(EqualsErrorMessage<T>(Expected, Actual, Msg), ErrorAddrs);
+end;
+
+procedure TGenericTestCase.FailNotEquals<T>(Expected, Actual: T; Msg: string;
+  ErrorAddrs: Pointer);
+begin
+  Fail(NotEqualsErrorMessage<T>(Expected, Actual, Msg), ErrorAddrs);
+end;
+
+function TGenericTestCase.EqualsErrorMessage<T>(Expected, Actual: T;
+  Msg: string): string;
+begin
+  if (Msg <> '') then
+    Msg := Msg + ', ';
+  Result := Format(sExpAndActualFmt, [Msg, TConverter<T>.ToString(Expected)])
+end;
+
+function TGenericTestCase.NotEqualsErrorMessage<T>(Expected, Actual: T;
+  Msg: string): string;
+begin
+  if (Msg <> '') then
+    Msg := Msg + ', ';
+  Result := Format(sExpButWasFmt ,
+    [Msg, TConverter<T>.ToString(Expected), TConverter<T>.ToString(Actual)]);
+end;
+
+{$ENDIF GENERICS}
 
 initialization
 {$IFDEF LINUX}
