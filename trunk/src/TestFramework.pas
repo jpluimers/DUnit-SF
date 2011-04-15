@@ -74,7 +74,11 @@ type
   end;
 
   {$DEFINE MSWINDOWS_OR_CLR}
+  {$DEFINE PUREPASCAL}
 {$ENDIF}
+{$IFNDEF CPU386}
+  {$DEFINE PUREPASCAL}
+{$ENDIF !CPU386}
 
 {$IFDEF CLR}
   TTestMethod  = string;
@@ -600,6 +604,7 @@ type
 {$IFDEF CONDITIONALEXPRESSIONS}
   {$IF (DEFINED(MSWINDOWS) OR DEFINED(POSIX)) AND (CompilerVersion >= 21.0)}
     {$DEFINE GENERICS} // Requires generics and RTTI (Delphi 2010)
+    {$DEFINE RTTI}     // RTTI supported
   {$ELSEIF DEFINED(CLR) AND (CompilerVersion >= 19.0)}
     {$DEFINE GENERICS} // Requires generics (Delphi 2007)
   {$IFEND}
@@ -926,8 +931,9 @@ begin
 end;
 
 
-function CallerAddr: Pointer; {$IFNDEF CLR} assembler; {$ENDIF}
-{$IFDEF CLR}
+//TODO -oUnassigned -cImplement : X64: ASM: function CallerAddr
+function CallerAddr: Pointer; {$IFNDEF PUREPASCAL} assembler; {$ENDIF}
+{$IFDEF PUREPASCAL}
 begin
   Result := nil;
 end;
@@ -2814,6 +2820,42 @@ var
     else
       Result := false;
   end;
+
+begin
+  inherited Create;
+  FMethodNameList := StringCollection.Create;
+  Methods := AClass.ClassInfo.GetMethods();
+  for I := 0 to System.Array(Methods).Length - 1 do
+    if IsTest(Methods[I]) then
+      FMethodNameList.Add(Methods[I].Name);
+end;
+{$ELSE}
+{$IFDEF RTTI}
+var
+  I: Integer;
+  LMethod: TRttiMethod;
+begin
+  inherited Create;
+  if AClass <> nil then
+    for LMethod in TRttiContext.Create.GetType(AClass).GetMethods do
+      if LMethod.Visibility = mvPublished then
+        if LMethod.VirtualIndex >= 0 then
+        begin
+          I := Low(FMethodNameList);
+          while (I <= High(FMethodNameList)) and (LMethod.Name <> FMethodNameList[I]) do
+            Inc(I);
+          if I > High(FMethodNameList) then
+          begin
+            SetLength(FMethodNameList, Length(FMethodNameList) + 1);
+            FMethodNameList[Length(FMethodNameList) - 1] := LMethod.Name;
+          end;
+        end
+        else
+        begin
+          SetLength(FMethodNameList, Length(FMethodNameList) + 1);
+          FMethodNameList[Length(FMethodNameList) - 1] := LMethod.Name;
+        end;
+end;
 {$ELSE}
 type
   TMethodTable = packed record
@@ -2831,16 +2873,8 @@ var
   entry: ^TMethodEntry;
   AName:  ShortString;
   i, j:  Integer;
-{$ENDIF}
 begin
   inherited Create;
-{$IFDEF CLR}
-  FMethodNameList := StringCollection.Create;
-  Methods := AClass.ClassInfo.GetMethods();
-  for I := 0 to System.Array(Methods).Length - 1 do
-    if IsTest(Methods[I]) then
-      FMethodNameList.Add(Methods[I].Name)
-{$ELSE}
   while aclass <> nil do
   begin
     table := PPointer(PAnsiChar(aclass) + vmtMethodTable)^;
@@ -2866,8 +2900,9 @@ begin
     end;
     aclass := aclass.ClassParent;
   end;
-{$ENDIF}
 end;
+{$ENDIF RTTI}
+{$ENDIF CLR}
 
 function TMethodEnumerator.GetMethodCount: Integer;
 begin
