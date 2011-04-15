@@ -1267,40 +1267,31 @@ begin
   Result := false;
   test.TestMethodInvoked := False;
   failure := nil;
-  {$IFDEF USE_JEDI_JCL}
   try
-    JclStartExceptionTracking;
-  {$ENDIF}
-    try
-      test.RunTest(self);
-      if not Assigned(FRootTest) then
-        FRootTest := test;
-      FTotalTime := FRootTest.ElapsedTestTime;
-      Result := true;
-    except
-      on e: EStopTestsFailure do
-      begin
-        failure := AddFailure(test, e, ExceptAddr);
-        FStop := True;
-      end;
-      on e: ETestFailure do
-      begin
-        failure := AddFailure(test, e, ExceptAddr);
-      end;
-      on e: EBreakingTestFailure do
-      begin
-        failure := AddFailure(test, e, ExceptAddr);
-      end;
-      on e: Exception do
-      begin
-        failure := AddError(test, e, ExceptAddr);
-      end;
+    test.RunTest(self);
+    if not Assigned(FRootTest) then
+      FRootTest := test;
+    FTotalTime := FRootTest.ElapsedTestTime;
+    Result := true;
+  except
+    on e: EStopTestsFailure do
+    begin
+      failure := AddFailure(test, e, ExceptAddr);
+      FStop := True;
     end;
-  {$IFDEF USE_JEDI_JCL}
-  finally
-    JclStopExceptionTracking;
+    on e: ETestFailure do
+    begin
+      failure := AddFailure(test, e, ExceptAddr);
+    end;
+    on e: EBreakingTestFailure do
+    begin
+      failure := AddFailure(test, e, ExceptAddr);
+    end;
+    on e: Exception do
+    begin
+      failure := AddError(test, e, ExceptAddr);
+    end;
   end;
-  {$ENDIF}
   if BreakOnFailures
   and (failure <> nil)
   and (failure.FThrownExceptionClass.InheritsFrom(ETestFailure))
@@ -1506,8 +1497,17 @@ procedure TTestResult.RunSuite(test: ITest);
 begin
   TestingStarts;
   try
+  {$IFDEF USE_JEDI_JCL}
+  try
+    JclStartExceptionTracking;
+  {$ENDIF}
     FRootTest := test;
     test.RunWithFixture(self);
+  {$IFDEF USE_JEDI_JCL}
+  finally
+    JclStopExceptionTracking;
+  end;
+  {$ENDIF}
   finally
     TestingEnds
   end
