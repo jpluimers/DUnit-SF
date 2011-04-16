@@ -602,7 +602,7 @@ type
   end;
 
 {$IFDEF CONDITIONALEXPRESSIONS}
-  {$IF (DEFINED(MSWINDOWS) OR DEFINED(POSIX)) AND (CompilerVersion >= 21.0)}
+  {$IF (DEFINED(MSWINDOWS) OR DEFINED(POSIX)) AND (CompilerVersion >= 21.0) AND DEFINED(CPU386)}
     {$DEFINE GENERICS} // Requires generics and RTTI (Delphi 2010)
     {$DEFINE RTTI}     // RTTI supported
   {$ELSEIF DEFINED(CLR) AND (CompilerVersion >= 19.0)}
@@ -718,8 +718,8 @@ function  RegisteredTests: ITestSuite;
 procedure ClearRegistry;
 
 // running tests
-function RunTest(suite: ITest; listeners: array of ITestListener): TTestResult; overload;
-function RunRegisteredTests(listeners: array of ITestListener): TTestResult;
+function RunTest(suite: ITest; const listeners: array of ITestListener): TTestResult; overload;
+function RunRegisteredTests(const listeners: array of ITestListener): TTestResult;
 
 // utility routines
 function CallerAddr: Pointer; {$IFNDEF CLR} assembler; {$ENDIF}
@@ -769,7 +769,7 @@ uses
   Libc;
 {$ENDIF}
 {$IFDEF POSIX}
-  PosixSysTime;
+  Posix.SysTime;
 {$ENDIF}
 {$IFDEF MSWINDOWS_OR_CLR}
   Windows,
@@ -885,20 +885,18 @@ var
 
 procedure InitPerformanceCounter;
 var
-  TV : TTimeVal;
-  TZ : TTimeZone;
+  TV : timeval;
 begin
-  gettimeofday(TV, TZ);
+  gettimeofday(TV, nil);
   PerformanceCounterInitValue :=
     LongWord(TV.tv_sec mod (24*60*60) * 1000) + (LongWord(TV.tv_usec) div 1000);
 end;
 
 function QueryPerformanceCounter(var PerformanceCounter: Int64): LongBool;
 var
-  TV : TTimeVal;
-  TZ : TTimeZone;
+  TV : timeval;
 begin
-  gettimeofday(TV, TZ);
+  gettimeofday(TV, nil);
   PerformanceCounter := (TV.tv_sec mod (24*60*60) * 1000) +
             (TV.tv_usec div 1000);
   PerformanceCounter := PerformanceCounter - PerformanceCounterInitValue;
@@ -1076,7 +1074,7 @@ end;
 {$IFNDEF CLR} // KGS: not expected to work in .NET, pointer magic follows
 function ByteAt(p: pointer; const Offset: integer): byte;
 begin
-  Result:=pByte(integer(p)+Offset)^;
+  Result:=pByte(NativeInt(p)+Offset)^;
 end;
 
 function FirstByteDiff(p1, p2: pointer; size: longword; out b1, b2: byte): integer;
@@ -1875,10 +1873,15 @@ procedure TAbstractTest.CheckEquals( expected,
                                      actual   : extended;
                                      delta    : extended;
                                      msg      : string = '');
+const
+  Infinity    =  1.0 / 0.0;
 begin
   FCheckCalled := True;
-  if (abs(expected-actual) > delta) then
-    FailNotEquals(FloatToStr(expected), FloatToStr(actual), msg, CallerAddr);
+  if not ((expected = Infinity) and (actual = Infinity)) then
+    if ((expected = Infinity) and (actual <> Infinity)) or
+       ((expected <> Infinity) and (actual = Infinity)) or
+       (abs(expected-actual) > delta) then
+      FailNotEquals(FloatToStr(expected), FloatToStr(actual), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckEquals(expected, actual: extended; msg: string);
@@ -2053,7 +2056,7 @@ procedure TAbstractTest.CheckEquals(expected, actual: Cardinal; msg: string = ''
 begin
   FCheckCalled := True;
   if expected <> actual then
-    FailEquals(IntToStr(expected), IntToStr(actual), msg, CallerAddr);
+    FailNotEquals(IntToStr(expected), IntToStr(actual), msg, CallerAddr);
 end;
 
 procedure TAbstractTest.CheckEquals(expected, actual: int64; msg: string);
@@ -3041,7 +3044,7 @@ begin
   Result := __TestRegistry;
 end;
 
-function RunTest(suite: ITest; listeners: array of ITestListener): TTestResult; overload;
+function RunTest(suite: ITest; const listeners: array of ITestListener): TTestResult; overload;
 var
   i        : Integer;
 begin
@@ -3052,7 +3055,7 @@ begin
     suite.Run(result);
 end;
 
-function RunRegisteredTests(listeners: array of ITestListener): TTestResult;
+function RunRegisteredTests(const listeners: array of ITestListener): TTestResult;
 begin
   Result := RunTest(RegisteredTests, listeners);
 end;
@@ -3075,6 +3078,7 @@ var
   LContext: TRttiContext;
   LField: TRttiField;
   LValue: TValue;
+  LTypeData: PTypeData;
   Buffer: Pointer;
   Fmt: string;
 begin
@@ -3116,6 +3120,20 @@ begin
     tkClass: Result := '$' + IntToHex(NativeInt(PPointer(Value)^), SizeOf(Pointer) * 2) +
       ' [' + PObject(Value)^.ClassName + ']';
     tkVariant: Result := PVariant(Value)^;
+    tkDynArray:
+      begin
+        Result := '(';
+        LTypeData := GetTypeData(Info);
+        for I := 0 to DynArraySize(PPointer(Value)^) - 1 do
+        begin
+          Result := Format('%s%s;', [Result,
+            ValueToString(LTypeData^.elType2^, LTypeData^.elSize,
+            Pointer((NativeInt(PPointer(Value)^) + LTypeData^.elSize * I)))]);
+        end;
+        if Length(Result) > 0 then
+          SetLength(Result, Length(Result) - 1);
+        Result := Result + ')';
+      end;
     tkRecord:
       begin
         Result := '(';

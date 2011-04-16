@@ -186,6 +186,7 @@ type
     </code> }
 
 {$IFNDEF CLR}
+{$IFNDEF MACOS}
   EMemoryError = class(ETestFailure);
 
   TMemoryTestTypes = (mttMemoryTestBeforeNormalTest, mttExecuteNormalTest, mttMemoryTestAfterNormalTest);
@@ -198,6 +199,7 @@ type
     function GetName : string; override;
     procedure RunTest(ATestResult: TTestResult); override;
   end;
+{$ENDIF}
 {$ENDIF}
 
 implementation
@@ -382,6 +384,7 @@ end;
 
 { TMemoryTest }
 {$IFNDEF CLR}
+{$IFNDEF MACOS}
 function TMemoryTest.GetName: string;
 begin
   Result := Format(sTestMemory, [getTest.Name]);
@@ -428,6 +431,7 @@ begin
     LocalResult.Free;
   end;
 end;
+{$ENDIF}
 {$ENDIF}
 
 end.
