@@ -1182,6 +1182,11 @@ var
   node: TTreeNode;
 begin
   FailureListView.Items.Clear;
+  ResultsView.Items.Clear;
+  ResultsView.Items.Clear;
+  with ResultsView.Items.Add do
+    for I := 0 to ResultsView.Columns.Count - 1 do
+      SubItems.Add('');
   ResetProgress;
   Update;
 
@@ -1199,13 +1204,6 @@ begin
       ProgressBar.Max:= 10000;
     end;
     ScoreBar.Max := ProgressBar.Max;
-
-    SubItems[1] := '';
-    SubItems[2] := '';
-    SubItems[3] := '';
-    SubItems[4] := '';
-    SubItems[5] := '';
-    SubItems[6] := '';
   end;
 
   for i := 0 to TestTree.Items.Count - 1 do
