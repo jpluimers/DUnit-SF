@@ -66,7 +66,6 @@ type
   {$DEFINE MSWINDOWS_OR_POSIX}
 {$ENDIF}
 {$IFDEF CLR}
-//  Pointer = Borland.Delphi.System.Pointer;
   IUnknown = interface(IInterface)
   end;
 
@@ -692,11 +691,7 @@ type
 
   TMethodEnumerator = class
   protected
-{$IFDEF CLR}
-    FMethodNameList: StringCollection;
-{$ELSE}
     FMethodNameList:  array of string;
-{$ENDIF}
     function GetNameOfMethod(idx: integer):  string;
     function GetMethodCount: Integer;
   public
@@ -2826,11 +2821,13 @@ var
 
 begin
   inherited Create;
-  FMethodNameList := StringCollection.Create;
   Methods := AClass.ClassInfo.GetMethods();
-  for I := 0 to System.Array(Methods).Length - 1 do
+  for I := 0 to Length(Methods) - 1 do
     if IsTest(Methods[I]) then
-      FMethodNameList.Add(Methods[I].Name);
+    begin
+      SetLength(FMethodNameList, Length(FMethodNameList) + 1);
+      FMethodNameList[Length(FMethodNameList) - 1] := Methods[I].Name;
+    end;
 end;
 {$ELSE}
 {$IFDEF RTTI}
@@ -2909,11 +2906,7 @@ end;
 
 function TMethodEnumerator.GetMethodCount: Integer;
 begin
-{$IFDEF CLR}
-  Result := FMethodNameList.Count;
-{$ELSE}
   Result := Length(FMethodNameList);
-{$ENDIF}
 end;
 
 function TMethodEnumerator.GetNameOfMethod(idx: integer): string;
