@@ -2834,27 +2834,31 @@ end;
 var
   I: Integer;
   LMethod: TRttiMethod;
+  MethodName: string;
+  Duplicate: boolean;
 begin
   inherited Create;
   if AClass <> nil then
     for LMethod in TRttiContext.Create.GetType(AClass).GetMethods do
       if LMethod.Visibility = mvPublished then
+      begin
+        Duplicate := false;
         if LMethod.VirtualIndex >= 0 then
         begin
-          I := Low(FMethodNameList);
-          while (I <= High(FMethodNameList)) and (LMethod.Name <> FMethodNameList[I]) do
-            Inc(I);
-          if I > High(FMethodNameList) then
-          begin
-            SetLength(FMethodNameList, Length(FMethodNameList) + 1);
-            FMethodNameList[Length(FMethodNameList) - 1] := LMethod.Name;
-          end;
-        end
-        else
+          for MethodName in FMethodNameList do
+            if MethodName = LMethod.Name then
+            begin
+              Duplicate := true;
+              Break;
+            end;
+        end;
+
+        if not Duplicate then
         begin
           SetLength(FMethodNameList, Length(FMethodNameList) + 1);
           FMethodNameList[Length(FMethodNameList) - 1] := LMethod.Name;
         end;
+      end;
 end;
 {$ELSE}
 type
